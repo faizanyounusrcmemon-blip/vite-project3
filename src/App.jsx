@@ -1,35 +1,45 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState } from 'react'
+import Navbar from './components/Navbar'
+import Dashboard from './pages/Dashboard'
+import SaleEntry from './pages/SaleEntry'
+import SaleReturn from './pages/SaleReturn'
+import SaleDetail from './pages/SaleDetail'
+import SaleItemDetail from './pages/SaleItemDetail'
+import PurchaseEntry from './pages/PurchaseEntry'
+import PurchaseReturn from './pages/PurchaseReturn'
+import PurchaseDetail from './pages/PurchaseDetail'
+import PurchaseItemDetail from './pages/PurchaseItemDetail'
+import ItemProfile from './pages/ItemProfile'
+import CustomerProfile from './pages/CustomerProfile'
+import ManageUsers from './pages/ManageUsers'
+import StockReport from './pages/StockReport'
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App(){
+  const [page, setPage] = useState('dashboard')
+
+  const renderPage = () => {
+    switch(page){
+      case 'dashboard': return <Dashboard />
+      case 'sale-entry': return <SaleEntry />
+      case 'sale-return': return <SaleReturn />
+      case 'sale-detail': return <SaleDetail />
+      case 'sale-item-detail': return <SaleItemDetail />
+      case 'purchase-entry': return <PurchaseEntry />
+      case 'purchase-return': return <PurchaseReturn />
+      case 'purchase-detail': return <PurchaseDetail />
+      case 'purchase-item-detail': return <PurchaseItemDetail />
+      case 'item-profile': return <ItemProfile />
+      case 'customer-profile': return <CustomerProfile />
+      case 'manage-users': return <ManageUsers />
+      case 'stock-report': return <StockReport />
+      default: return <Dashboard />
+    }
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div className="app-root">
+      <Navbar onNavigate={setPage} />
+      <div className="content-area">{renderPage()}</div>
+    </div>
   )
 }
-
-export default App
