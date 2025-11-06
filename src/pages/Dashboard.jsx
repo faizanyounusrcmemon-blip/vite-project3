@@ -1,60 +1,78 @@
-import React, {useEffect, useState} from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
-export default function Dashboard(){
+const supabase = SUPABASE_URL && SUPABASE_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null
+
+export default function Dashboard() {
   const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [showList, setShowList] = useState(false)
+  const containerRef = useRef(null)
 
-  useEffect(()=>{
-    const load = async ()=>{
-      setLoading(true); setError('')
-      try{
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!supabase) {
+        setError('Supabase client not initialized — check .env')
+        setLoading(false)
+        return
+      }
+      try {
         const { data, error } = await supabase.from('items').select('*').limit(10)
-        if(error) {
-          setError(error.message || 'No table or permission error — but connection ok.')
-        } else {
-          setItems(data || [])
-        }
-      }catch(err){
-        setError(err.message || 'Error contacting Supabase')
-      }finally{ setLoading(false) }
+        if (error) throw error
+        setItems(data)
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
     }
-    load()
-  },[])
+    fetchData()
+  }, [])
+
+  // ✅ Close list only when click outside container
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setShowList(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  if (loading) return <p>Loading...</p>
+  if (error) return <p style={{ color: 'red' }}>❌ {error}</p>
 
   return (
-    <div>
-      <h2 className="header-title">Dashboard</h2>
-      <div className="card">
-        <p className="small">Welcome to Khadija Jewellery dashboard — Black & Gold theme.</p>
-        <div style={{marginTop:12}}>
-          <strong>Supabase connectivity test:</strong>
-          {loading ? <div>Checking...</div> : (
-            <div>
-              {error ? <div style={{color:'#f88',marginTop:8}}>{error}</div> : (
-                <div>
-                  <div style={{marginTop:8,color:'#9f9'}}>Connected — sample rows (if any):</div>
-                  <div style={{marginTop:8}}>
-                    {items.length===0 ? <div className="small">No rows found in 'items' table.</div> : (
-                      <table style={{width:'100%',borderCollapse:'collapse',marginTop:8}}>
-                        <thead><tr><th style={{textAlign:'left',padding:6}}>Code</th><th style={{textAlign:'left',padding:6}}>Name</th></tr></thead>
-                        <tbody>
-                          {items.map(it=> <tr key={it.id}><td style={{padding:6}}>{it.code||'-'}</td><td style={{padding:6}}>{it.name||'-'}</td></tr>)}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+    <div style={{ padding: 20 }} ref={containerRef}>
+      <h2>Dashboard</h2>
+      <p>✅ Supabase Connected</p>
+
+      <button onClick={() => setShowList(!showList)} style={{ marginBottom: 10 }}>
+        Toggle Items List
+      </button>
+
+      {showList && (
+        <table border="1" cellPadding="6">
+          <thead>
+            <tr><th>Code</th><th>Name</th></tr>
+          </thead>
+          <tbody>
+            {items.map(item => (
+              <tr key={item.id}>
+                <td>{item.code}</td>
+                <td>{item.name}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   )
 }

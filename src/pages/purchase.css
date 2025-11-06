@@ -1,0 +1,4 @@
+/* minimal optional styles */
+.purchase-page input{padding:6px;border:1px solid #ccc;border-radius:4px}
+.purchase-page label{font-size:13px;color:#333}
+.purchase-page button{margin-left:6px;padding:6px 10px}
