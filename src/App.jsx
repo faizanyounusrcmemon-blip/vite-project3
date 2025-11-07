@@ -4,7 +4,6 @@ import Dashboard from "./pages/Dashboard";
 import SaleEntry from "./pages/SaleEntry";
 import SaleReturn from "./pages/SaleReturn";
 import SaleReturnDetail from "./pages/SaleReturnDetail";
-import SaleReturnItemDetail from "./pages/SaleReturnItemDetail";
 import SaleDetail from "./pages/SaleDetail";
 import SaleItemDetail from "./pages/SaleItemDetail";
 import PurchaseEntry from "./pages/PurchaseEntry";
@@ -45,7 +44,6 @@ export default function App() {
       case "sale-entry": return <SaleEntry onNavigate={setPage} />;
       case "sale-return": return <SaleReturn onNavigate={setPage} />;
       case "sale-return-detail": return <SaleReturnDetail onNavigate={setPage} />;
-      case "sale-return-item-detail": return <SaleReturnItemDetail onNavigate={setPage} />;
       case "sale-detail":
         return (
           <SaleDetail
