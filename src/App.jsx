@@ -16,7 +16,7 @@ import CustomerProfile from "./pages/CustomerProfile";
 import ManageUsers from "./pages/ManageUsers";
 import StockReport from "./pages/StockReport";
 import BarcodePrint from "./pages/BarcodePrint";
-import Login from "./pages/Login";
+import Login from "./pages/login";
 import InvoiceEdit from "./pages/InvoiceEdit";
 
 // ✅ NEW IMPORTS
