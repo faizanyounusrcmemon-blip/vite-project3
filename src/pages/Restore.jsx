@@ -18,7 +18,20 @@ export default function Restore({ onNavigate }) {
       const data = await res.json();
 
       if (data.success) {
-        setFiles(data.files);
+        // Fix time parsing
+        const fixed = data.files.map((f) => {
+          const parts = f.name.replace(".zip", "").split("_");
+
+          const dateStr = parts[1]; // YYYY-MM-DD
+          const timeStr = parts[2].replace(/-/g, ":"); // HH:mm:ss
+
+          return {
+            ...f,
+            date: `${dateStr} ${timeStr}`,
+          };
+        });
+
+        setFiles(fixed);
       } else {
         alert("❌ Failed to load backup list");
       }
@@ -27,7 +40,6 @@ export default function Restore({ onNavigate }) {
     }
   }
 
-  // ---------- RESTORE FUNCTION ----------
   async function restoreFile(fileName, mode = "full", table = "") {
     const password = prompt("Enter Restore Password:");
     if (!password) return;
@@ -43,20 +55,13 @@ export default function Restore({ onNavigate }) {
 
       const res = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/restore-from-bucket`,
-        {
-          method: "POST",
-          body: form,
-        }
+        { method: "POST", body: form }
       );
 
       const data = await res.json();
       setLoading(false);
 
-      if (data.success) {
-        alert("✅ Restore Successful!");
-      } else {
-        alert("❌ Restore Failed: " + data.error);
-      }
+      alert(data.success ? "✅ Restore Successful!" : "❌ " + data.error);
     } catch (err) {
       alert("❌ Error: " + err.message);
       setLoading(false);
@@ -64,10 +69,9 @@ export default function Restore({ onNavigate }) {
   }
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div style={{ padding: "20px", color: "white" }}>
       <h2>🔄 Restore Backup</h2>
 
-      {/* Backup List */}
       <h3 style={{ marginTop: "20px" }}>📁 Available Backups</h3>
 
       {files.length === 0 ? (
@@ -78,10 +82,12 @@ export default function Restore({ onNavigate }) {
             width: "100%",
             borderCollapse: "collapse",
             marginTop: "10px",
+            background: "#111",
+            color: "white",
           }}
         >
           <thead>
-            <tr style={{ background: "#f0f0f0" }}>
+            <tr style={{ background: "#333" }}>
               <th style={{ padding: "8px" }}>File</th>
               <th style={{ padding: "8px" }}>Date</th>
               <th style={{ padding: "8px" }}>Actions</th>
@@ -90,16 +96,18 @@ export default function Restore({ onNavigate }) {
 
           <tbody>
             {files.map((file) => (
-              <tr key={file.name} style={{ borderBottom: "1px solid #ddd" }}>
+              <tr key={file.name} style={{ borderBottom: "1px solid #444" }}>
                 <td style={{ padding: "8px" }}>{file.name}</td>
                 <td style={{ padding: "8px" }}>{file.date}</td>
+
                 <td style={{ padding: "8px" }}>
+                  {/* FULL RESTORE BUTTON */}
                   <button
                     disabled={loading}
                     onClick={() => restoreFile(file.name, "full")}
                     style={{
                       padding: "6px 12px",
-                      background: "#0d6efd",
+                      background: "#007bff",
                       color: "white",
                       marginRight: "6px",
                       borderRadius: "4px",
@@ -110,15 +118,18 @@ export default function Restore({ onNavigate }) {
                     🔄 Full Restore
                   </button>
 
-                  {/* Selected Table Restore */}
+                  {/* TABLE RESTORE */}
                   <select
                     onChange={(e) =>
+                      e.target.value &&
                       restoreFile(file.name, "table", e.target.value)
                     }
                     style={{
                       padding: "6px",
                       borderRadius: "4px",
-                      border: "1px solid #ccc",
+                      border: "1px solid #666",
+                      background: "#222",
+                      color: "white",
                     }}
                   >
                     <option value="">Restore Table...</option>
