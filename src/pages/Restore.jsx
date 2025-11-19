@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-export default function Restore({ onNavigate }) {
+export default function Restore() {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -15,33 +15,28 @@ export default function Restore({ onNavigate }) {
       const res = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/list-backups`
       );
+
       const data = await res.json();
 
       if (data.success) {
-        // Fix time parsing
         const fixed = data.files.map((f) => {
-          const parts = f.name.replace(".zip", "").split("_");
-
-          const dateStr = parts[1]; // YYYY-MM-DD
-          const timeStr = parts[2].replace(/-/g, ":"); // HH:mm:ss
+          const p = f.name.replace(".zip", "").split("_");
 
           return {
             ...f,
-            date: `${dateStr} ${timeStr}`,
+            date: `${p[1]} ${p[2].replace(/-/g, ":")}`,
           };
         });
 
         setFiles(fixed);
-      } else {
-        alert("❌ Failed to load backup list");
       }
     } catch (err) {
-      alert("Error loading backups: " + err.message);
+      alert("❌ Error: " + err.message);
     }
   }
 
   async function restoreFile(fileName, mode = "full", table = "") {
-    const password = prompt("Enter Restore Password:");
+    const password = prompt("Enter Password:");
     if (!password) return;
 
     setLoading(true);
@@ -58,7 +53,16 @@ export default function Restore({ onNavigate }) {
         { method: "POST", body: form }
       );
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        const text = await res.text();
+        alert("❌ Server Error:\n\n" + text);
+        setLoading(false);
+        return;
+      }
+
       setLoading(false);
 
       alert(data.success ? "✅ Restore Successful!" : "❌ " + data.error);
@@ -72,79 +76,48 @@ export default function Restore({ onNavigate }) {
     <div style={{ padding: "20px", color: "white" }}>
       <h2>🔄 Restore Backup</h2>
 
-      <h3 style={{ marginTop: "20px" }}>📁 Available Backups</h3>
+      <h3>📁 Available Backups</h3>
 
-      {files.length === 0 ? (
-        <p>No backups found.</p>
-      ) : (
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            marginTop: "10px",
-            background: "#111",
-            color: "white",
-          }}
-        >
-          <thead>
-            <tr style={{ background: "#333" }}>
-              <th style={{ padding: "8px" }}>File</th>
-              <th style={{ padding: "8px" }}>Date</th>
-              <th style={{ padding: "8px" }}>Actions</th>
+      <table style={{ width: "100%", marginTop: "10px" }}>
+        <thead>
+          <tr>
+            <th>File</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {files.map((file) => (
+            <tr key={file.name}>
+              <td>{file.name}</td>
+              <td>{file.date}</td>
+              <td>
+                <button
+                  disabled={loading}
+                  onClick={() => restoreFile(file.name, "full")}
+                >
+                  🔄 Full Restore
+                </button>
+
+                <select
+                  onChange={(e) =>
+                    e.target.value &&
+                    restoreFile(file.name, "table", e.target.value)
+                  }
+                >
+                  <option>Restore Table...</option>
+                  {TABLES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </td>
             </tr>
-          </thead>
-
-          <tbody>
-            {files.map((file) => (
-              <tr key={file.name} style={{ borderBottom: "1px solid #444" }}>
-                <td style={{ padding: "8px" }}>{file.name}</td>
-                <td style={{ padding: "8px" }}>{file.date}</td>
-
-                <td style={{ padding: "8px" }}>
-                  {/* FULL RESTORE BUTTON */}
-                  <button
-                    disabled={loading}
-                    onClick={() => restoreFile(file.name, "full")}
-                    style={{
-                      padding: "6px 12px",
-                      background: "#007bff",
-                      color: "white",
-                      marginRight: "6px",
-                      borderRadius: "4px",
-                      border: "none",
-                      cursor: "pointer",
-                    }}
-                  >
-                    🔄 Full Restore
-                  </button>
-
-                  {/* TABLE RESTORE */}
-                  <select
-                    onChange={(e) =>
-                      e.target.value &&
-                      restoreFile(file.name, "table", e.target.value)
-                    }
-                    style={{
-                      padding: "6px",
-                      borderRadius: "4px",
-                      border: "1px solid #666",
-                      background: "#222",
-                      color: "white",
-                    }}
-                  >
-                    <option value="">Restore Table...</option>
-                    {TABLES.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
