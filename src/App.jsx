@@ -31,6 +31,15 @@ import MonthlyReport from "./pages/MonthlyReport";
 // =====================================================================
 function BackupButton() {
   async function takeBackup() {
+    const pwd = prompt("Enter backup password:");
+    if (!pwd) return;
+
+    // Your backup password
+    if (pwd !== "8515") {
+      alert("❌ Incorrect Password!");
+      return;
+    }
+
     try {
       const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/backup`, {
         method: "POST",
