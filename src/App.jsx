@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 
 import Dashboard from "./pages/Dashboard";
+import Restore from "./pages/Restore";
 import SaleEntry from "./pages/SaleEntry";
 import SaleReturn from "./pages/SaleReturn";
 import SaleReturnDetail from "./pages/SaleReturnDetail";
@@ -25,9 +26,9 @@ import SaleReport from "./pages/SaleReport";
 import MonthlyReport from "./pages/MonthlyReport";
 
 
-// ------------------------------------------------
-// 🟢 BACKUP BUTTON COMPONENT (New Stylish Small Button)
-// ------------------------------------------------
+// =====================================================================
+// SMALL BACKUP BUTTON (fixed size + perfect UI)
+// =====================================================================
 function BackupButton() {
   async function takeBackup() {
     try {
@@ -35,23 +36,10 @@ function BackupButton() {
         method: "POST",
       });
 
-      const text = await res.text();
-      let data;
-
-      try {
-        data = JSON.parse(text);
-      } catch {
-        alert("Backup Failed: Server returned invalid response:\n" + text);
-        return;
-      }
-
-      if (data.success) {
-        alert("✅ Backup Completed Successfully!");
-      } else {
-        alert("❌ Backup Failed:\n" + (data.error || "Unknown Error"));
-      }
+      const data = await res.json();
+      alert(data.success ? "✅ Backup Completed!" : "❌ " + data.error);
     } catch (err) {
-      alert("❌ Backup Error: " + err.message);
+      alert("❌ Error: " + err.message);
     }
   }
 
@@ -61,27 +49,13 @@ function BackupButton() {
       style={{
         background: "#0d6efd",
         color: "white",
-        padding: "6px 16px",
-        fontSize: "14px",
-        borderRadius: "6px",
+        padding: "4px 10px",
+        fontSize: "13px",
+        borderRadius: "5px",
         cursor: "pointer",
         border: "none",
-        fontWeight: "500",
-        transition: "0.2s",
-
-        // ⭐⭐ MAIN FIX ⭐⭐
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-
-        width: "auto",
-        maxWidth: "fit-content",
-        minWidth: "max-content",
-
-        margin: "10px auto 10px 10px",
+        margin: "8px 5px",
       }}
-      onMouseEnter={(e) => (e.target.style.background = "#0b5ed7")}
-      onMouseLeave={(e) => (e.target.style.background = "#0d6efd")}
     >
       ☁ Backup
     </button>
@@ -89,9 +63,10 @@ function BackupButton() {
 }
 
 
-// ------------------------------------------------
-// 🟢 MAIN APP COMPONENT
-// ------------------------------------------------
+
+// =====================================================================
+// MAIN APP COMPONENT
+// =====================================================================
 export default function App() {
   const [page, setPage] = useState("login");
   const [user, setUser] = useState(null);
@@ -111,12 +86,13 @@ export default function App() {
     }
   }, [user]);
 
-  // ---------- PAGE RENDER SWITCH ----------
+  // PAGE SWITCHING
   function renderPage() {
     if (!user) return <Login onLogin={(u) => setUser(u)} />;
 
     switch (page) {
       case "dashboard": return <Dashboard onNavigate={setPage} />;
+      case "restore": return <Restore onNavigate={setPage} />;
       case "sale-entry": return <SaleEntry onNavigate={setPage} />;
       case "sale-return": return <SaleReturn onNavigate={setPage} />;
       case "sale-return-detail": return <SaleReturnDetail onNavigate={setPage} />;
@@ -154,13 +130,16 @@ export default function App() {
     }
   }
 
-  // ---------- FINAL UI ----------
   return (
     <div className="app-root">
       {user && <Navbar onNavigate={setPage} />}
 
-      {/* 🔥 BACKUP BUTTON ALWAYS SHOWS WHEN LOGGED IN */}
-      {user && <BackupButton />}
+      {/* 🔥 BACKUP + RESTORE BUTTONS SHOW TOGETHER */}
+      {user && (
+        <div style={{ display: "flex", paddingLeft: "10px" }}>
+          <BackupButton />
+        </div>
+      )}
 
       <div className="content-area">{renderPage()}</div>
     </div>
