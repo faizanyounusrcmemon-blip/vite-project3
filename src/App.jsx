@@ -25,16 +25,17 @@ import InvoiceEdit from "./pages/InvoiceEdit";
 import SaleReport from "./pages/SaleReport";
 import MonthlyReport from "./pages/MonthlyReport";
 
+// ⭐ NEW REPORT ADDED HERE
+import DeletedInvoiceReport from "./pages/DeletedInvoiceReport";
 
 // =====================================================================
-// SMALL BACKUP BUTTON (fixed size + perfect UI)
+// SMALL BACKUP BUTTON
 // =====================================================================
 function BackupButton() {
   async function takeBackup() {
     const pwd = prompt("Enter backup password:");
     if (!pwd) return;
 
-    // Your backup password
     if (pwd !== "8515") {
       alert("❌ Incorrect Password!");
       return;
@@ -70,8 +71,6 @@ function BackupButton() {
     </button>
   );
 }
-
-
 
 // =====================================================================
 // MAIN APP COMPONENT
@@ -133,9 +132,14 @@ export default function App() {
       case "sale-report": return <SaleReport onNavigate={setPage} />;
       case "monthly-report": return <MonthlyReport onNavigate={setPage} />;
 
+      // ⭐ NEW PAGE
+      case "deleted-invoice-report":
+        return <DeletedInvoiceReport onNavigate={setPage} />;
+
       case "invoice-edit": return <InvoiceEdit onNavigate={setPage} />;
 
-      default: return <Dashboard onNavigate={setPage} />;
+      default:
+        return <Dashboard onNavigate={setPage} />;
     }
   }
 
@@ -143,7 +147,7 @@ export default function App() {
     <div className="app-root">
       {user && <Navbar onNavigate={setPage} />}
 
-      {/* 🔥 BACKUP + RESTORE BUTTONS SHOW TOGETHER */}
+      {/* ⭐ BACKUP BUTTON */}
       {user && (
         <div style={{ display: "flex", paddingLeft: "10px" }}>
           <BackupButton />
