@@ -20,8 +20,6 @@ export default function Restore() {
   }
 
   async function restoreFile(fileName, mode, table = null) {
-
-    // 🔥 PASSWORD PROMPT ADDED
     const password = prompt("Enter Restore Password:");
 
     if (!password) {
@@ -32,7 +30,7 @@ export default function Restore() {
     setLoading(true);
 
     const form = new FormData();
-    form.append("password", password); // user entered password
+    form.append("password", password);
     form.append("fileName", fileName);
     form.append("mode", mode);
     if (table) form.append("table", table);
@@ -57,6 +55,23 @@ export default function Restore() {
 
   return (
     <div style={{ padding: 20 }}>
+
+      {/* ⭐ EXIT BUTTON — no navigate, safe */}
+      <button
+        onClick={() => (window.location.href = "/")}
+        style={{
+          marginBottom: 20,
+          backgroundColor: "red",
+          color: "white",
+          padding: "6px 12px",
+          borderRadius: "6px",
+          cursor: "pointer",
+          border: "none",
+        }}
+      >
+        EXIT
+      </button>
+
       <h2>Restore Backup</h2>
 
       {loading && <p>Restoring, please wait...</p>}
