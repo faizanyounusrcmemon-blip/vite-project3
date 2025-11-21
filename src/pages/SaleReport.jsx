@@ -25,7 +25,8 @@ export default function SaleReport() {
     const { data } = await supabase
       .from("sales")
       .select("*")
-      .eq("sale_date", today);
+      .eq("sale_date", today)
+      .eq("is_deleted", false); // ⭐ FILTER ADDED
 
     if (!data || data.length === 0) return;
 
@@ -36,22 +37,22 @@ export default function SaleReport() {
         invoiceMap[r.invoice_no] = {
           totalAmount: 0,
           totalProfit: 0,
-          totalDiscount: 0
+          totalDiscount: 0,
         };
       }
 
-      // ✅ Add sale amount
+      // Add sale amount
       invoiceMap[r.invoice_no].totalAmount += Number(r.amount);
 
-      // ✅ Discount Amount (correct)
+      // Discount amount
       const saleRate = Number(r.sale_rate);
       const qty = Number(r.qty);
       const discountPercent = Number(r.discount || 0);
-
       const discountAmount = (saleRate * qty * discountPercent) / 100;
+
       invoiceMap[r.invoice_no].totalDiscount += discountAmount;
 
-      // ✅ Get purchase price
+      // Get item purchase price
       const { data: item } = await supabase
         .from("items")
         .select("purchase_price")
@@ -60,10 +61,10 @@ export default function SaleReport() {
 
       const purchase = Number(item?.purchase_price || 0);
 
-      // ✅ Net sale after discount
+      // Net sale after discount
       const netSale = saleRate - (saleRate * discountPercent) / 100;
 
-      // ✅ Profit
+      // Profit
       invoiceMap[r.invoice_no].totalProfit += (netSale - purchase) * qty;
     }
 
@@ -90,7 +91,8 @@ export default function SaleReport() {
       .from("sales")
       .select("*")
       .gte("sale_date", fromDate)
-      .lte("sale_date", toDate);
+      .lte("sale_date", toDate)
+      .eq("is_deleted", false); // ⭐ FILTER ADDED
 
     if (!data || data.length === 0) {
       setRecords([]);
@@ -109,7 +111,7 @@ export default function SaleReport() {
           sale_date: r.sale_date,
           totalAmount: 0,
           totalProfit: 0,
-          totalDiscount: 0
+          totalDiscount: 0,
         };
       }
 
@@ -156,8 +158,15 @@ export default function SaleReport() {
     <div style={{ padding: 20 }}>
       <h2>📊 Sales Profit Report</h2>
 
-      {/* ✅ TODAY SUMMARY */}
-      <div style={{ padding: 15, border: "1px solid #ccc", borderRadius: 6, marginBottom: 20 }}>
+      {/* TODAY SUMMARY */}
+      <div
+        style={{
+          padding: 15,
+          border: "1px solid #ccc",
+          borderRadius: 6,
+          marginBottom: 20,
+        }}
+      >
         <h3>Today's Sale: Rs {todaySale.toFixed(2)}</h3>
         <h3 style={{ color: "green" }}>
           Today's Discount: Rs {todayDiscount.toFixed(2)}
@@ -167,18 +176,33 @@ export default function SaleReport() {
         </h3>
       </div>
 
-      {/* ✅ DATE FILTER */}
-      <div style={{ padding: 15, border: "1px solid #ccc", borderRadius: 6, marginBottom: 20 }}>
+      {/* DATE FILTER */}
+      <div
+        style={{
+          padding: 15,
+          border: "1px solid #ccc",
+          borderRadius: 6,
+          marginBottom: 20,
+        }}
+      >
         <h3>Date to Date Report</h3>
 
         <div style={{ display: "flex", gap: 15 }}>
           <div>
             <label>From</label>
-            <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+            />
           </div>
           <div>
             <label>To</label>
-            <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
+            <input
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+            />
           </div>
           <button
             onClick={handleFilter}
@@ -189,13 +213,15 @@ export default function SaleReport() {
         </div>
 
         <h3>Total Sale: Rs {filteredSale.toFixed(2)}</h3>
-        <h3 style={{ color: "green" }}>Total Discount: Rs {filteredDiscount.toFixed(2)}</h3>
+        <h3 style={{ color: "green" }}>
+          Total Discount: Rs {filteredDiscount.toFixed(2)}
+        </h3>
         <h3 style={{ color: filteredProfit >= 0 ? "blue" : "red" }}>
           Total Profit: Rs {filteredProfit.toFixed(2)}
         </h3>
       </div>
 
-      {/* ✅ TABLE */}
+      {/* TABLE */}
       {records.length > 0 && (
         <table width="100%" border="1" style={{ borderCollapse: "collapse" }}>
           <thead>
