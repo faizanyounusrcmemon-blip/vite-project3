@@ -20,10 +20,19 @@ export default function Restore() {
   }
 
   async function restoreFile(fileName, mode, table = null) {
+
+    // 🔥 PASSWORD PROMPT ADDED
+    const password = prompt("Enter Restore Password:");
+
+    if (!password) {
+      alert("Restore cancelled (no password entered)");
+      return;
+    }
+
     setLoading(true);
 
     const form = new FormData();
-    form.append("password", "faizanyounus");
+    form.append("password", password); // user entered password
     form.append("fileName", fileName);
     form.append("mode", mode);
     if (table) form.append("table", table);
@@ -70,17 +79,13 @@ export default function Restore() {
                 <td>{file.name}</td>
                 <td>{file.date}</td>
                 <td>
-                  <button
-                    onClick={() => restoreFile(file.name, "full")}
-                  >
+                  <button onClick={() => restoreFile(file.name, "full")}>
                     Restore Full
                   </button>
                 </td>
                 <td>
                   <select
-                    onChange={(e) =>
-                      setSelectedTable(e.target.value)
-                    }
+                    onChange={(e) => setSelectedTable(e.target.value)}
                     defaultValue=""
                   >
                     <option value="" disabled>
