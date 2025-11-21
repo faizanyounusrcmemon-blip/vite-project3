@@ -131,6 +131,13 @@ export default function Navbar({ onNavigate }) {
                   Monthly Graph Report
                 </button>
               )}
+
+              {/* ⭐ DELETED INVOICE REPORT WITH PERMISSION */}
+              {can("deleted_invoice_report") && (
+                <button onClick={() => onNavigate("deleted-invoice-report")}>
+                  🗑 Deleted Invoice Report
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -138,11 +145,11 @@ export default function Navbar({ onNavigate }) {
 
       {/* ---------------- RIGHT SIDE BUTTONS ---------------- */}
       <div className="right-actions">
-        
-        {/* ✅ Restore Button (NEW – same style as Logout) */}
+
+        {/* Restore Button */}
         <button
-          className="logout-btn"      // same CSS class = same UI
-          style={{ marginRight: "10px", background: "#6f42c1" }} // purple button
+          className="logout-btn"
+          style={{ marginRight: "10px", background: "#6f42c1" }}
           onClick={() => onNavigate("restore")}
         >
           🔄 Restore
