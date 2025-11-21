@@ -13,8 +13,33 @@ export default function Dashboard() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [showList, setShowList] = useState(false)
+  const [lastBackup, setLastBackup] = useState("")   // ⭐ Add this
   const containerRef = useRef(null)
 
+  // ================================
+  // LOAD LAST BACKUP TIME
+  // ================================
+  useEffect(() => {
+    loadLastBackup()
+  }, [])
+
+  async function loadLastBackup() {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/list-backups`)
+      const data = await res.json()
+
+      if (data.success && data.files.length > 0) {
+        setLastBackup(data.files[0].date)   // newest backup
+      }
+    } catch (err) {
+      console.error("Backup load error:", err)
+    }
+  }
+
+  
+  // ================================
+  // LOAD ITEMS
+  // ================================
   useEffect(() => {
     const fetchData = async () => {
       if (!supabase) {
@@ -35,7 +60,7 @@ export default function Dashboard() {
     fetchData()
   }, [])
 
-  // ✅ Close list only when click outside container
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (containerRef.current && !containerRef.current.contains(event.target)) {
@@ -53,6 +78,12 @@ export default function Dashboard() {
     <div style={{ padding: 20 }} ref={containerRef}>
       <h2>Dashboard</h2>
       <p>✅ Supabase Connected</p>
+
+      
+      {/* ⭐ Last Backup Time */}
+      <p style={{ marginTop: -5, marginBottom: 15, color: "yellow", fontWeight: "bold" }}>
+        Last Backup: {lastBackup || "No backup found"}
+      </p>
 
       <button onClick={() => setShowList(!showList)} style={{ marginBottom: 10 }}>
         Toggle Items List
