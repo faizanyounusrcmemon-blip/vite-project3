@@ -5,11 +5,12 @@ export default function ManageUsers({ onNavigate }) {
   const [users, setUsers] = useState([]);
   const [saving, setSaving] = useState(false);
 
+  // ⭐ Added: deleted_invoice_report
   const perms = [
     "sale_entry", "sale_return", "sale_detail", "sale_item_detail",
     "purchase_entry", "purchase_return", "purchase_detail", "purchase_item_detail",
     "item_profile", "customer_profile", "manage_users", "stock_report",
-    "sale_report", "monthly_report"
+    "sale_report", "monthly_report", "deleted_invoice_report"
   ];
 
   async function loadUsers() {
@@ -31,7 +32,7 @@ export default function ManageUsers({ onNavigate }) {
     setSaving(true);
 
     for (const u of users) {
-      await supabase.from("app_users").update(u).eq("id", u.id); // ✅ FIXED
+      await supabase.from("app_users").update(u).eq("id", u.id);
     }
 
     await loadUsers();
