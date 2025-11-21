@@ -22,7 +22,11 @@ export default function MonthlyReport() {
   }, []);
 
   const loadMonthlyData = async () => {
-    const { data: sales } = await supabase.from("sales").select("*");
+    // ⭐ GET ONLY NON-DELETED SALES
+    const { data: sales } = await supabase
+      .from("sales")
+      .select("*")
+      .eq("is_deleted", false);
 
     if (!sales) return;
 
@@ -39,8 +43,10 @@ export default function MonthlyReport() {
         };
       }
 
+      // Add sale amount
       map[month].totalSale += Number(r.amount);
 
+      // Get item purchase price
       const { data: item } = await supabase
         .from("items")
         .select("purchase_price")
@@ -52,8 +58,10 @@ export default function MonthlyReport() {
       const qty = Number(r.qty);
       const discount = Number(r.discount || 0);
 
+      // Net sale after discount
       const netSale = saleRate - saleRate * (discount / 100);
 
+      // Add profit
       map[month].totalProfit += (netSale - purchase) * qty;
     }
 
