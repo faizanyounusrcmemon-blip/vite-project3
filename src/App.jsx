@@ -21,6 +21,8 @@ import StockReport from "./pages/StockReport";
 import BarcodePrint from "./pages/BarcodePrint";
 import Login from "./pages/login";
 import InvoiceEdit from "./pages/InvoiceEdit";
+import PurchaseEdit from "./pages/PurchaseEdit";
+
 
 import SaleReport from "./pages/SaleReport";
 import MonthlyReport from "./pages/MonthlyReport";
@@ -137,6 +139,7 @@ export default function App() {
         return <DeletedInvoiceReport onNavigate={setPage} />;
 
       case "invoice-edit": return <InvoiceEdit onNavigate={setPage} />;
+      case "purchase-edit": return <PurchaseEdit onNavigate={setPage} />;
 
       default:
         return <Dashboard onNavigate={setPage} />;
