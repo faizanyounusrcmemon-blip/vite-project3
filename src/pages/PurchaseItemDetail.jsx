@@ -10,7 +10,7 @@ export default function PurchaseItemDetail({ onNavigate }) {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Default date range (last 30 days)
+  // Default last 30 days
   useEffect(() => {
     const t = new Date();
     const f = new Date();
@@ -19,18 +19,20 @@ export default function PurchaseItemDetail({ onNavigate }) {
     setTo(t.toISOString().slice(0, 10));
   }, []);
 
-  // Load items
   useEffect(() => {
     if (from && to) load();
   }, [from, to, itemQuery]);
 
+  // ⭐ Load Table (Soft delete hidden)
   async function load() {
     setLoading(true);
+
     const { data, error } = await supabase
       .from("purchases")
       .select(
-        "id, invoice_no, company_name, purchase_date, item_code, item_name, sale_price, qty, barcode"
+        "id, invoice_no, company_name, purchase_date, item_code, item_name, sale_price, qty, barcode, is_deleted"
       )
+      .eq("is_deleted", false) // ⭐⭐ SOFT DELETE HIDE DONE ⭐⭐
       .gte("purchase_date", from)
       .lte("purchase_date", to)
       .order("purchase_date", { ascending: false });
@@ -55,6 +57,7 @@ export default function PurchaseItemDetail({ onNavigate }) {
     setLoading(false);
   }
 
+  // Search suggestions
   async function loadSuggestions(q) {
     setItemQuery(q);
     if (!q.trim()) return setSuggestions([]);
@@ -68,7 +71,7 @@ export default function PurchaseItemDetail({ onNavigate }) {
     setSuggestions(data || []);
   }
 
-  // Thermal single barcode print
+  // Single Item Thermal Print
   function printBarcodes(r) {
     localStorage.setItem("print_invoice", r.invoice_no);
     localStorage.setItem("print_barcode", r.barcode);
@@ -78,27 +81,26 @@ export default function PurchaseItemDetail({ onNavigate }) {
     window.open("/print.html", "_blank");
   }
 
-  // ⭐ EXIT BUTTON → GO BACK TO DASHBOARD
+  // Exit Button
   function handleExit() {
     if (typeof onNavigate === "function") onNavigate("dashboard");
   }
 
   return (
     <div style={{ padding: 12, color: "#fff", minHeight: "100vh" }}>
-      
-      {/* HEADER + EXIT BUTTON */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h2 style={{ color: "#f3c46b", margin: 0 }}>Purchase Item Detail</h2>
 
+      {/* Header + Exit */}
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <h2 style={{ color: "#f3c46b" }}>Purchase Item Detail</h2>
         <button
           onClick={handleExit}
           style={{
             background: "#c33",
             color: "#fff",
-            border: "none",
             padding: "8px 12px",
             borderRadius: 6,
             cursor: "pointer",
+            border: "none",
           }}
         >
           Exit
@@ -106,7 +108,7 @@ export default function PurchaseItemDetail({ onNavigate }) {
       </div>
 
       {/* Filters */}
-      <div style={{ marginTop: 12, marginBottom: 12 }}>
+      <div style={{ marginBottom: 12 }}>
         <label>From: </label>
         <input
           type="date"
@@ -222,7 +224,7 @@ export default function PurchaseItemDetail({ onNavigate }) {
           </tbody>
         </table>
       ) : (
-        <p style={{ marginTop: 20, color: "#ccc" }}>No records found.</p>
+        <p style={{ color: "#ccc", marginTop: 20 }}>No records found.</p>
       )}
     </div>
   );
