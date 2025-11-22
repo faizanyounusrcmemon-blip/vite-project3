@@ -1,3 +1,4 @@
+// src/pages/PurchaseItemDetail.jsx
 import React, { useEffect, useState } from "react";
 import supabase from "../utils/supabaseClient";
 
@@ -9,7 +10,7 @@ export default function PurchaseItemDetail() {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Default date range (last 30 days)
+  // Default date range (30 days)
   useEffect(() => {
     const t = new Date();
     const f = new Date();
@@ -18,7 +19,7 @@ export default function PurchaseItemDetail() {
     setTo(t.toISOString().slice(0, 10));
   }, []);
 
-  // Load items on mount and when filters change
+  // Load items when filters change
   useEffect(() => {
     if (from && to) load();
   }, [from, to, itemQuery]);
@@ -26,11 +27,13 @@ export default function PurchaseItemDetail() {
   // Load purchase items
   async function load() {
     setLoading(true);
+
     const { data, error } = await supabase
       .from("purchases")
       .select(
-        "id, invoice_no, company_name, purchase_date, item_code, item_name, sale_price, qty, barcode"
+        "id, invoice_no, company_name, purchase_date, item_code, item_name, sale_price, qty, barcode, is_deleted"
       )
+      .eq("is_deleted", false)   // ⭐ Soft delete invoices hidden
       .gte("purchase_date", from)
       .lte("purchase_date", to)
       .order("purchase_date", { ascending: false });
@@ -52,29 +55,33 @@ export default function PurchaseItemDetail() {
 
       setRows(list);
     }
+
     setLoading(false);
   }
 
-  // Search suggestions from items table
+  // Search suggestions
   async function loadSuggestions(q) {
     setItemQuery(q);
     if (!q.trim()) return setSuggestions([]);
+
     const { data } = await supabase
       .from("items")
       .select("item_name, item_code")
       .ilike("item_name", `%${q}%`)
       .limit(10);
+
     setSuggestions(data || []);
   }
 
-  // Print single item barcode
+  // Print single item barcode (thermal)
   function printBarcodes(r) {
     localStorage.setItem("print_invoice", r.invoice_no);
     localStorage.setItem("print_barcode", r.barcode);
     localStorage.setItem("print_name", r.item_name);
     localStorage.setItem("print_price", r.sale_price || 0);
     localStorage.setItem("print_qty", r.qty);
-    window.open("/print.html", "_blank"); // ✅ standalone page
+
+    window.open("/print.html", "_blank");
   }
 
   return (
@@ -159,25 +166,26 @@ export default function PurchaseItemDetail() {
         >
           <thead>
             <tr style={{ background: "#333", color: "#f3c46b" }}>
-              <th style={{ padding: 6 }}>Inv</th>
-              <th style={{ padding: 6 }}>Date</th>
-              <th style={{ padding: 6 }}>Company</th>
-              <th style={{ padding: 6 }}>Item</th>
-              <th style={{ padding: 6 }}>Qty</th>
-              <th style={{ padding: 6 }}>Barcode</th>
-              <th style={{ padding: 6 }}>Print</th>
+              <th>Inv</th>
+              <th>Date</th>
+              <th>Company</th>
+              <th>Item</th>
+              <th>Qty</th>
+              <th>Barcode</th>
+              <th>Print</th>
             </tr>
           </thead>
+
           <tbody>
             {rows.map((r) => (
               <tr key={r.id} style={{ borderBottom: "1px solid #555" }}>
-                <td style={{ padding: 6 }}>{r.invoice_no}</td>
-                <td style={{ padding: 6 }}>{r.purchase_date}</td>
-                <td style={{ padding: 6 }}>{r.company_name}</td>
-                <td style={{ padding: 6 }}>{r.item_name}</td>
-                <td style={{ padding: 6 }}>{r.qty}</td>
-                <td style={{ padding: 6 }}>{r.barcode}</td>
-                <td style={{ padding: 6 }}>
+                <td>{r.invoice_no}</td>
+                <td>{r.purchase_date}</td>
+                <td>{r.company_name}</td>
+                <td>{r.item_name}</td>
+                <td>{r.qty}</td>
+                <td>{r.barcode}</td>
+                <td>
                   <button
                     onClick={() => printBarcodes(r)}
                     style={{
