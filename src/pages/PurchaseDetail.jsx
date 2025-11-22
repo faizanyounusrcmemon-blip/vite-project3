@@ -80,7 +80,7 @@ export default function PurchaseDetail({ onNavigate }) {
   const softDelete = async (invoiceNo) => {
     const p = prompt("Enter delete password:");
     if (!p) return;
-    if (p !== "8515") return alert("❌ Incorrect Password!");
+    if (p !== "5050") return alert("❌ Incorrect Password!");
 
     const ok = confirm("Soft delete this purchase?");
     if (!ok) return;
