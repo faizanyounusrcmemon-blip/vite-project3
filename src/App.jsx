@@ -13,6 +13,8 @@ import PurchaseEntry from "./pages/PurchaseEntry";
 import PurchaseReturn from "./pages/PurchaseReturn";
 import PurchaseDetail from "./pages/PurchaseDetail";
 import PurchaseItemDetail from "./pages/PurchaseItemDetail";
+import PurchaseDeleteReport from "./pages/PurchaseDeleteReport";
+
 
 import ItemProfile from "./pages/ItemProfile";
 import CustomerProfile from "./pages/CustomerProfile";
@@ -124,6 +126,8 @@ export default function App() {
       case "purchase-return": return <PurchaseReturn onNavigate={setPage} />;
       case "purchase-detail": return <PurchaseDetail onNavigate={setPage} />;
       case "purchase-item-detail": return <PurchaseItemDetail onNavigate={setPage} />;
+      case "purchase-delete-report": return <PurchaseDeleteReport onNavigate={setPage} />;
+
 
       case "barcode-print": return <BarcodePrint onNavigate={setPage} />;
       case "item-profile": return <ItemProfile onNavigate={setPage} />;
