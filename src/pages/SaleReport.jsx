@@ -1,255 +1,216 @@
+// src/pages/StockReport.jsx
 import React, { useEffect, useState } from "react";
 import supabase from "../utils/supabaseClient";
 
-export default function SaleReport() {
-  const [todaySale, setTodaySale] = useState(0);
-  const [todayProfit, setTodayProfit] = useState(0);
-  const [todayDiscount, setTodayDiscount] = useState(0);
-
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-
-  const [records, setRecords] = useState([]);
-  const [filteredSale, setFilteredSale] = useState(0);
-  const [filteredProfit, setFilteredProfit] = useState(0);
-  const [filteredDiscount, setFilteredDiscount] = useState(0);
+export default function StockReport({ onNavigate }) {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [q, setQ] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    loadTodaySale();
-  }, []);
+    load();
+  }, [q]);
 
-  // ✅ TODAY SUMMARY
-  const loadTodaySale = async () => {
-    const today = new Date().toISOString().slice(0, 10);
+  async function load() {
+    setLoading(true);
+    setError("");
 
-    const { data } = await supabase
-      .from("sales")
-      .select("*")
-      .eq("sale_date", today)
-      .eq("is_deleted", false); // ⭐ FILTER ADDED
+    try {
+      // ⭐ PURCHASES → ignore soft-deleted rows
+      const { data: purchases } = await supabase
+        .from("purchases")
+        .select("item_code, item_name, barcode, purchase_rate, qty, is_deleted")
+        .eq("is_deleted", false);
 
-    if (!data || data.length === 0) return;
+      const map = new Map();
 
-    const invoiceMap = {};
+      purchases?.forEach((r) => {
+        const code = String(r.item_code || "");
+        if (!code) return;
 
-    for (const r of data) {
-      if (!invoiceMap[r.invoice_no]) {
-        invoiceMap[r.invoice_no] = {
-          totalAmount: 0,
-          totalProfit: 0,
-          totalDiscount: 0,
+        const item = map.get(code) || {
+          item_code: code,
+          item_name: r.item_name,
+          barcode: r.barcode,
+          purchase_qty: 0,
+          purchase_rate: Number(r.purchase_rate || 0),
+          sold_qty: 0,
         };
+
+        item.purchase_qty += Number(r.qty || 0);
+        map.set(code, item);
+      });
+
+      // ⭐ SALES → ignore soft-deleted sale rows
+      const { data: sales, error: salesErr } = await supabase
+        .from("sales")
+        .select("item_code, qty, is_deleted")
+        .eq("is_deleted", false);
+
+      if (salesErr) throw salesErr;
+
+      sales?.forEach((r) => {
+        const code = String(r.item_code || "");
+        const qty = Number(r.qty || 0);
+        if (!code) return;
+
+        const item = map.get(code);
+        if (!item) return;
+
+        item.sold_qty += qty;
+      });
+
+      // ⭐ Final Stock Calculation
+      const final = [];
+
+      for (const it of map.values()) {
+        const remaining = it.purchase_qty - it.sold_qty;
+        final.push({
+          ...it,
+          remaining_qty: remaining,
+          remaining_amount: remaining * it.purchase_rate,
+        });
       }
 
-      // Add sale amount
-      invoiceMap[r.invoice_no].totalAmount += Number(r.amount);
+      // ⭐ Search filter
+      const f = q
+        ? final.filter(
+            (r) =>
+              r.item_code.toLowerCase().includes(q.toLowerCase()) ||
+              r.item_name.toLowerCase().includes(q.toLowerCase()) ||
+              (r.barcode || "").toLowerCase().includes(q.toLowerCase())
+          )
+        : final;
 
-      // Discount amount
-      const saleRate = Number(r.sale_rate);
-      const qty = Number(r.qty);
-      const discountPercent = Number(r.discount || 0);
-      const discountAmount = (saleRate * qty * discountPercent) / 100;
-
-      invoiceMap[r.invoice_no].totalDiscount += discountAmount;
-
-      // Get item purchase price
-      const { data: item } = await supabase
-        .from("items")
-        .select("purchase_price")
-        .eq("id", r.item_code)
-        .single();
-
-      const purchase = Number(item?.purchase_price || 0);
-
-      // Net sale after discount
-      const netSale = saleRate - (saleRate * discountPercent) / 100;
-
-      // Profit
-      invoiceMap[r.invoice_no].totalProfit += (netSale - purchase) * qty;
+      setRows(f);
+    } catch (err) {
+      setError(err.message);
     }
 
-    let saleSum = 0;
-    let profitSum = 0;
-    let discountSum = 0;
+    setLoading(false);
+  }
 
-    Object.values(invoiceMap).forEach((v) => {
-      saleSum += v.totalAmount;
-      profitSum += v.totalProfit;
-      discountSum += v.totalDiscount;
-    });
+  const totalValue = rows.reduce((s, r) => s + (r.remaining_amount || 0), 0);
 
-    setTodaySale(saleSum);
-    setTodayProfit(profitSum);
-    setTodayDiscount(discountSum);
-  };
-
-  // ✅ DATE FILTER
-  const handleFilter = async () => {
-    if (!fromDate || !toDate) return alert("Select both dates");
-
-    const { data } = await supabase
-      .from("sales")
-      .select("*")
-      .gte("sale_date", fromDate)
-      .lte("sale_date", toDate)
-      .eq("is_deleted", false); // ⭐ FILTER ADDED
-
-    if (!data || data.length === 0) {
-      setRecords([]);
-      setFilteredSale(0);
-      setFilteredProfit(0);
-      setFilteredDiscount(0);
-      return;
-    }
-
-    const invoiceMap = {};
-
-    for (const r of data) {
-      if (!invoiceMap[r.invoice_no]) {
-        invoiceMap[r.invoice_no] = {
-          invoice_no: r.invoice_no,
-          sale_date: r.sale_date,
-          totalAmount: 0,
-          totalProfit: 0,
-          totalDiscount: 0,
-        };
-      }
-
-      invoiceMap[r.invoice_no].totalAmount += Number(r.amount);
-
-      const saleRate = Number(r.sale_rate);
-      const qty = Number(r.qty);
-      const discountPercent = Number(r.discount || 0);
-
-      const discountAmount = (saleRate * qty * discountPercent) / 100;
-      invoiceMap[r.invoice_no].totalDiscount += discountAmount;
-
-      const { data: item } = await supabase
-        .from("items")
-        .select("purchase_price")
-        .eq("id", r.item_code)
-        .single();
-
-      const purchase = Number(item?.purchase_price || 0);
-      const netSale = saleRate - saleRate * (discountPercent / 100);
-
-      invoiceMap[r.invoice_no].totalProfit += (netSale - purchase) * qty;
-    }
-
-    const arr = Object.values(invoiceMap);
-    setRecords(arr);
-
-    let saleSum = 0;
-    let profitSum = 0;
-    let discountSum = 0;
-
-    arr.forEach((v) => {
-      saleSum += v.totalAmount;
-      profitSum += v.totalProfit;
-      discountSum += v.totalDiscount;
-    });
-
-    setFilteredSale(saleSum);
-    setFilteredProfit(profitSum);
-    setFilteredDiscount(discountSum);
-  };
+  function handleExit() {
+    if (typeof onNavigate === "function") onNavigate("dashboard");
+    else window.history.back();
+  }
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>📊 Sales Profit Report</h2>
+    <div style={{ padding: 12, color: "#fff", fontFamily: "Inter" }}>
+      <h2 style={{ color: "#f3c46b" }}>📦 Stock Report</h2>
 
-      {/* TODAY SUMMARY */}
-      <div
-        style={{
-          padding: 15,
-          border: "1px solid #ccc",
-          borderRadius: 6,
-          marginBottom: 20,
-        }}
-      >
-        <h3>Today's Sale: Rs {todaySale.toFixed(2)}</h3>
-        <h3 style={{ color: "green" }}>
-          Today's Discount: Rs {todayDiscount.toFixed(2)}
-        </h3>
-        <h3 style={{ color: todayProfit >= 0 ? "blue" : "red" }}>
-          Today's Profit: Rs {todayProfit.toFixed(2)}
-        </h3>
-      </div>
+      <input
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="🔍 Search item code / name / barcode"
+        style={{ width: "100%", padding: 8, borderRadius: 6, marginBottom: 10 }}
+      />
 
-      {/* DATE FILTER */}
-      <div
-        style={{
-          padding: 15,
-          border: "1px solid #ccc",
-          borderRadius: 6,
-          marginBottom: 20,
-        }}
-      >
-        <h3>Date to Date Report</h3>
+      <div style={{ background: "#111", padding: 8, borderRadius: 6 }}>
+        {loading ? (
+          "Loading..."
+        ) : error ? (
+          error
+        ) : (
+          <table style={{ width: "100%", fontSize: 13 }}>
+            <thead>
+              <tr style={{ background: "#222" }}>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Purchased</th>
+                <th>Sold</th>
+                <th>Remain</th>
+                <th>Value</th>
+              </tr>
+            </thead>
 
-        <div style={{ display: "flex", gap: 15 }}>
-          <div>
-            <label>From</label>
-            <input
-              type="date"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-            />
-          </div>
-          <div>
-            <label>To</label>
-            <input
-              type="date"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-            />
-          </div>
-          <button
-            onClick={handleFilter}
-            style={{ background: "blue", color: "white", padding: "6px 12px" }}
-          >
-            Search
-          </button>
+            <tbody>
+              {rows.length === 0 ? (
+                <tr>
+                  <td colSpan="6">No items</td>
+                </tr>
+              ) : (
+                rows.map((r) => (
+                  <tr key={r.item_code}>
+                    <td>{r.item_code}</td>
+                    <td>{r.item_name}</td>
+                    <td style={{ textAlign: "right" }}>{r.purchase_qty}</td>
+                    <td style={{ textAlign: "right" }}>{r.sold_qty}</td>
+
+                    <td
+                      style={{
+                        textAlign: "right",
+                        color: r.remaining_qty < 0 ? "red" : "#4caf50",
+                      }}
+                    >
+                      {r.remaining_qty}
+                    </td>
+
+                    <td style={{ textAlign: "right", color: "#f3c46b" }}>
+                      {r.remaining_amount.toFixed(2)}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
+
+        {/* Total Value */}
+        <div style={{ marginTop: 8 }}>
+          <b>Total Stock Value:</b> Rs {totalValue.toFixed(2)}
         </div>
 
-        <h3>Total Sale: Rs {filteredSale.toFixed(2)}</h3>
-        <h3 style={{ color: "green" }}>
-          Total Discount: Rs {filteredDiscount.toFixed(2)}
-        </h3>
-        <h3 style={{ color: filteredProfit >= 0 ? "blue" : "red" }}>
-          Total Profit: Rs {filteredProfit.toFixed(2)}
-        </h3>
+        {/* Exit + Thermal Print */}
+        <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
+          <button
+            onClick={handleExit}
+            style={{
+              background: "#c33",
+              padding: "8px 10px",
+              borderRadius: 6,
+              color: "#fff",
+              width: "100%",
+            }}
+          >
+            Exit
+          </button>
+
+          <button
+            onClick={() => window.print()}
+            style={{
+              background: "#4caf50",
+              padding: "8px 10px",
+              borderRadius: 6,
+              color: "#fff",
+              width: "100%",
+            }}
+          >
+            🖨️ Thermal Print
+          </button>
+        </div>
       </div>
 
-      {/* TABLE */}
-      {records.length > 0 && (
-        <table width="100%" border="1" style={{ borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ background: "#eee" }}>
-              <th>Date</th>
-              <th>Invoice No</th>
-              <th>Total Amount</th>
-              <th>Total Discount</th>
-              <th>Total Profit</th>
-            </tr>
-          </thead>
-          <tbody>
-            {records.map((r, i) => (
-              <tr key={i}>
-                <td>{r.sale_date}</td>
-                <td>{r.invoice_no}</td>
-                <td>Rs {r.totalAmount.toFixed(2)}</td>
-                <td style={{ color: "green" }}>
-                  Rs {r.totalDiscount.toFixed(2)}
-                </td>
-                <td style={{ color: r.totalProfit >= 0 ? "blue" : "red" }}>
-                  Rs {r.totalProfit.toFixed(2)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      {/* Print CSS */}
+      <style>
+        {`
+        @media print {
+          body {
+            width: 80mm;
+            font-size: 11px;
+          }
+          table {
+            width: 100%;
+          }
+          button, input, h2 {
+            display: none !important;
+          }
+        }
+        `}
+      </style>
     </div>
   );
 }
