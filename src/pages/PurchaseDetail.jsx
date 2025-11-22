@@ -26,7 +26,8 @@ export default function PurchaseDetail({ onNavigate }) {
     try {
       const { data, error } = await supabase
         .from("purchases")
-        .select("invoice_no, company_name, purchase_date, amount")
+        .select("id, invoice_no, company_name, purchase_date, amount")
+        .eq("is_deleted", false)           // ⭐ Only non-deleted entries
         .gte("purchase_date", from)
         .lte("purchase_date", to)
         .order("purchase_date", { ascending: false });
@@ -37,6 +38,7 @@ export default function PurchaseDetail({ onNavigate }) {
         data.reduce((acc, row) => {
           if (!acc[row.invoice_no]) {
             acc[row.invoice_no] = {
+              id: row.id,
               invoice_no: row.invoice_no,
               company_name: row.company_name,
               purchase_date: row.purchase_date,
@@ -66,17 +68,35 @@ export default function PurchaseDetail({ onNavigate }) {
 
   const totalAll = rows.reduce((s, r) => s + (Number(r.total) || 0), 0);
 
-  const handleExit = () => {
-    if (typeof onNavigate === "function") {
-      onNavigate("dashboard");
-    } else {
-      window.location.href = "#";
-    }
+  const handleExit = () => onNavigate("dashboard");
+
+  // ⭐ EDIT FUNCTION
+  const editInvoice = (invoice) => {
+    sessionStorage.setItem("purchaseEditInvoice", invoice);
+    onNavigate("purchase-edit");
+  };
+
+  // ⭐ SOFT DELETE FUNCTION (with password)
+  const softDelete = async (invoiceNo) => {
+    const p = prompt("Enter delete password:");
+    if (!p) return;
+    if (p !== "8515") return alert("❌ Incorrect Password!");
+
+    const ok = confirm("Soft delete this purchase?");
+    if (!ok) return;
+
+    await supabase
+      .from("purchases")
+      .update({ is_deleted: true })
+      .eq("invoice_no", invoiceNo);
+
+    alert("🗑 Soft Deleted!");
+    load();
   };
 
   return (
     <div style={{ padding: 16, fontFamily: "Inter, system-ui, sans-serif", color: "#fff" }}>
-      {/* Header with Exit Button */}
+      {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h2 style={{ margin: 0, marginBottom: 12, color: "#f3c46b" }}>Purchase Detail</h2>
         <button
@@ -134,9 +154,12 @@ export default function PurchaseDetail({ onNavigate }) {
                   <th>Company</th>
                   <th>Date</th>
                   <th style={{ textAlign: "right" }}>Total</th>
-                  <th>Action</th>
+                  <th>Copy</th>
+                  <th>Edit</th>
+                  <th>Delete</th>
                 </tr>
               </thead>
+
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.invoice_no} style={{ borderBottom: "1px solid #222" }}>
@@ -144,11 +167,13 @@ export default function PurchaseDetail({ onNavigate }) {
                     <td>{r.company_name}</td>
                     <td>{r.purchase_date}</td>
                     <td style={{ textAlign: "right" }}>{Number(r.total).toFixed(2)}</td>
+
+                    {/* Copy Button */}
                     <td>
                       <button
                         onClick={() => navigator.clipboard.writeText(r.invoice_no)}
                         style={{
-                          background: "#333",
+                          background: "#444",
                           color: "#fff",
                           padding: "4px 8px",
                           borderRadius: 6,
@@ -159,12 +184,48 @@ export default function PurchaseDetail({ onNavigate }) {
                         Copy
                       </button>
                     </td>
+
+                    {/* ⭐ EDIT BUTTON */}
+                    <td>
+                      <button
+                        onClick={() => editInvoice(r.invoice_no)}
+                        style={{
+                          background: "#0d6efd",
+                          color: "#fff",
+                          padding: "4px 8px",
+                          borderRadius: 6,
+                          cursor: "pointer",
+                          border: "none"
+                        }}
+                      >
+                        Edit
+                      </button>
+                    </td>
+
+                    {/* ⭐ SOFT DELETE BUTTON */}
+                    <td>
+                      <button
+                        onClick={() => softDelete(r.invoice_no)}
+                        style={{
+                          background: "red",
+                          color: "#fff",
+                          padding: "4px 8px",
+                          borderRadius: 6,
+                          cursor: "pointer",
+                          border: "none"
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </td>
                   </tr>
                 ))}
 
                 {rows.length === 0 && (
                   <tr>
-                    <td colSpan="5" style={{ textAlign: "center", padding: 8 }}>No purchases found</td>
+                    <td colSpan="7" style={{ textAlign: "center", padding: 8 }}>
+                      No purchases found
+                    </td>
                   </tr>
                 )}
               </tbody>
