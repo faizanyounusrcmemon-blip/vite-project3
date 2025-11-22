@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import supabase from "../utils/supabaseClient";
 
-export default function DeletedInvoiceReport() {
+export default function DeletedInvoiceReport({ onNavigate }) {
   const [records, setRecords] = useState([]);
 
   useEffect(() => {
@@ -12,7 +12,7 @@ export default function DeletedInvoiceReport() {
     const { data: sales } = await supabase
       .from("sales")
       .select("*")
-      .eq("is_deleted", true); // ⭐ Only deleted invoices
+      .eq("is_deleted", true); // Only deleted invoices
 
     if (!sales || sales.length === 0) {
       setRecords([]);
@@ -70,19 +70,43 @@ export default function DeletedInvoiceReport() {
     loadDeletedInvoices();
   };
 
-  // ❗ Optional: Permanent delete
+  // ⭐ Permanent delete with password
   const permanentDelete = async (invoiceNo) => {
-    const ok = confirm("This will permanently delete the invoice. Continue?");
+    const pass = prompt("Enter delete password:");
+    if (!pass) return alert("❌ Password required");
+
+    // YOUR DELETE PASSWORD
+    if (pass !== "5050") {
+      return alert("❌ Incorrect password!");
+    }
+
+    const ok = confirm("⚠ This will permanently delete the invoice. Continue?");
     if (!ok) return;
 
     await supabase.from("sales").delete().eq("invoice_no", invoiceNo);
 
-    alert("Invoice permanently deleted!");
+    alert("🗑 Invoice permanently deleted!");
     loadDeletedInvoices();
   };
 
   return (
     <div style={{ padding: 20 }}>
+      {/* ⭐ EXIT BUTTON */}
+      <button
+        onClick={() => onNavigate("dashboard")}
+        style={{
+          background: "#6f42c1",
+          color: "#fff",
+          padding: "6px 12px",
+          borderRadius: "5px",
+          border: "none",
+          cursor: "pointer",
+          marginBottom: 15,
+        }}
+      >
+        ⬅ Exit
+      </button>
+
       <h2>🗑 Deleted Invoice Report</h2>
 
       {records.length === 0 ? (
@@ -110,6 +134,8 @@ export default function DeletedInvoiceReport() {
                 <td style={{ color: r.totalProfit >= 0 ? "blue" : "red" }}>
                   Rs {r.totalProfit.toFixed(2)}
                 </td>
+
+                {/* Restore */}
                 <td>
                   <button
                     onClick={() => restoreInvoice(r.invoice_no)}
@@ -118,6 +144,8 @@ export default function DeletedInvoiceReport() {
                     Restore
                   </button>
                 </td>
+
+                {/* Delete Forever with Password */}
                 <td>
                   <button
                     onClick={() => permanentDelete(r.invoice_no)}
@@ -126,6 +154,7 @@ export default function DeletedInvoiceReport() {
                     Delete
                   </button>
                 </td>
+
               </tr>
             ))}
           </tbody>
