@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import supabase from "../utils/supabaseClient";
 
-export default function PurchaseItemDetail() {
+export default function PurchaseItemDetail({ onNavigate }) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [rows, setRows] = useState([]);
@@ -10,7 +10,7 @@ export default function PurchaseItemDetail() {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Default date range (30 days)
+  // Default date range (last 30 days)
   useEffect(() => {
     const t = new Date();
     const f = new Date();
@@ -19,21 +19,18 @@ export default function PurchaseItemDetail() {
     setTo(t.toISOString().slice(0, 10));
   }, []);
 
-  // Load items when filters change
+  // Load items
   useEffect(() => {
     if (from && to) load();
   }, [from, to, itemQuery]);
 
-  // Load purchase items
   async function load() {
     setLoading(true);
-
     const { data, error } = await supabase
       .from("purchases")
       .select(
-        "id, invoice_no, company_name, purchase_date, item_code, item_name, sale_price, qty, barcode, is_deleted"
+        "id, invoice_no, company_name, purchase_date, item_code, item_name, sale_price, qty, barcode"
       )
-      .eq("is_deleted", false)   // ⭐ Soft delete invoices hidden
       .gte("purchase_date", from)
       .lte("purchase_date", to)
       .order("purchase_date", { ascending: false });
@@ -55,11 +52,9 @@ export default function PurchaseItemDetail() {
 
       setRows(list);
     }
-
     setLoading(false);
   }
 
-  // Search suggestions
   async function loadSuggestions(q) {
     setItemQuery(q);
     if (!q.trim()) return setSuggestions([]);
@@ -73,23 +68,45 @@ export default function PurchaseItemDetail() {
     setSuggestions(data || []);
   }
 
-  // Print single item barcode (thermal)
+  // Thermal single barcode print
   function printBarcodes(r) {
     localStorage.setItem("print_invoice", r.invoice_no);
     localStorage.setItem("print_barcode", r.barcode);
     localStorage.setItem("print_name", r.item_name);
     localStorage.setItem("print_price", r.sale_price || 0);
     localStorage.setItem("print_qty", r.qty);
-
     window.open("/print.html", "_blank");
+  }
+
+  // ⭐ EXIT BUTTON → GO BACK TO DASHBOARD
+  function handleExit() {
+    if (typeof onNavigate === "function") onNavigate("dashboard");
   }
 
   return (
     <div style={{ padding: 12, color: "#fff", minHeight: "100vh" }}>
-      <h2 style={{ color: "#f3c46b" }}>Purchase Item Detail</h2>
+      
+      {/* HEADER + EXIT BUTTON */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h2 style={{ color: "#f3c46b", margin: 0 }}>Purchase Item Detail</h2>
+
+        <button
+          onClick={handleExit}
+          style={{
+            background: "#c33",
+            color: "#fff",
+            border: "none",
+            padding: "8px 12px",
+            borderRadius: 6,
+            cursor: "pointer",
+          }}
+        >
+          Exit
+        </button>
+      </div>
 
       {/* Filters */}
-      <div style={{ marginBottom: 12 }}>
+      <div style={{ marginTop: 12, marginBottom: 12 }}>
         <label>From: </label>
         <input
           type="date"
