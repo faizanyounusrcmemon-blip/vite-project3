@@ -17,13 +17,15 @@ export default function StockReport({ onNavigate }) {
     setError("");
 
     try {
+      // ⭐ PURCHASES → ignore soft-deleted rows
       const { data: purchases } = await supabase
         .from("purchases")
-        .select("item_code, item_name, barcode, purchase_rate, qty");
+        .select("item_code, item_name, barcode, purchase_rate, qty, is_deleted")
+        .eq("is_deleted", false);
 
       const map = new Map();
 
-      purchases?.forEach(r => {
+      purchases?.forEach((r) => {
         const code = String(r.item_code || "");
         if (!code) return;
 
@@ -33,22 +35,22 @@ export default function StockReport({ onNavigate }) {
           barcode: r.barcode,
           purchase_qty: 0,
           purchase_rate: Number(r.purchase_rate || 0),
-          sold_qty: 0
+          sold_qty: 0,
         };
 
         item.purchase_qty += Number(r.qty || 0);
         map.set(code, item);
       });
 
-      // ✅ صرف وہی sales لا رہے ہیں جن کا deleted = false ہے
+      // ⭐ SALES → ignore soft-deleted sale rows
       const { data: sales, error: salesErr } = await supabase
         .from("sales")
         .select("item_code, qty, is_deleted")
-        .eq("is_deleted", false); // 🔥 یہی اصل لائن ہے
+        .eq("is_deleted", false);
 
       if (salesErr) throw salesErr;
 
-      sales?.forEach(r => {
+      sales?.forEach((r) => {
         const code = String(r.item_code || "");
         const qty = Number(r.qty || 0);
         if (!code) return;
@@ -59,6 +61,7 @@ export default function StockReport({ onNavigate }) {
         item.sold_qty += qty;
       });
 
+      // ⭐ Final Stock Calculation
       const final = [];
 
       for (const it of map.values()) {
@@ -66,13 +69,14 @@ export default function StockReport({ onNavigate }) {
         final.push({
           ...it,
           remaining_qty: remaining,
-          remaining_amount: remaining * it.purchase_rate
+          remaining_amount: remaining * it.purchase_rate,
         });
       }
 
+      // ⭐ Search filter
       const f = q
         ? final.filter(
-            r =>
+            (r) =>
               r.item_code.toLowerCase().includes(q.toLowerCase()) ||
               r.item_name.toLowerCase().includes(q.toLowerCase()) ||
               (r.barcode || "").toLowerCase().includes(q.toLowerCase())
@@ -106,7 +110,11 @@ export default function StockReport({ onNavigate }) {
       />
 
       <div style={{ background: "#111", padding: 8, borderRadius: 6 }}>
-        {loading ? "Loading..." : error ? error : (
+        {loading ? (
+          "Loading..."
+        ) : error ? (
+          error
+        ) : (
           <table style={{ width: "100%", fontSize: 13 }}>
             <thead>
               <tr style={{ background: "#222" }}>
@@ -118,50 +126,75 @@ export default function StockReport({ onNavigate }) {
                 <th>Value</th>
               </tr>
             </thead>
+
             <tbody>
               {rows.length === 0 ? (
-                <tr><td colSpan="6">No items</td></tr>
-              ) : rows.map(r => (
-                <tr key={r.item_code}>
-                  <td>{r.item_code}</td>
-                  <td>{r.item_name}</td>
-                  <td style={{ textAlign: "right" }}>{r.purchase_qty}</td>
-                  <td style={{ textAlign: "right" }}>{r.sold_qty}</td>
-                  <td style={{ textAlign: "right", color: r.remaining_qty < 0 ? "red" : "#4caf50" }}>
-                    {r.remaining_qty}
-                  </td>
-                  <td style={{ textAlign: "right", color: "#f3c46b" }}>
-                    {r.remaining_amount.toFixed(2)}
-                  </td>
+                <tr>
+                  <td colSpan="6">No items</td>
                 </tr>
-              ))}
+              ) : (
+                rows.map((r) => (
+                  <tr key={r.item_code}>
+                    <td>{r.item_code}</td>
+                    <td>{r.item_name}</td>
+                    <td style={{ textAlign: "right" }}>{r.purchase_qty}</td>
+                    <td style={{ textAlign: "right" }}>{r.sold_qty}</td>
+
+                    <td
+                      style={{
+                        textAlign: "right",
+                        color: r.remaining_qty < 0 ? "red" : "#4caf50",
+                      }}
+                    >
+                      {r.remaining_qty}
+                    </td>
+
+                    <td style={{ textAlign: "right", color: "#f3c46b" }}>
+                      {r.remaining_amount.toFixed(2)}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         )}
 
+        {/* Total Value */}
         <div style={{ marginTop: 8 }}>
           <b>Total Stock Value:</b> Rs {totalValue.toFixed(2)}
         </div>
 
-        {/* Exit + Thermal Print Buttons */}
+        {/* Exit + Thermal Print */}
         <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
           <button
             onClick={handleExit}
-            style={{ background: "#c33", padding: "8px 10px", borderRadius: 6, color: "#fff", width: "100%" }}
+            style={{
+              background: "#c33",
+              padding: "8px 10px",
+              borderRadius: 6,
+              color: "#fff",
+              width: "100%",
+            }}
           >
             Exit
           </button>
 
           <button
             onClick={() => window.print()}
-            style={{ background: "#4caf50", padding: "8px 10px", borderRadius: 6, color: "#fff", width: "100%" }}
+            style={{
+              background: "#4caf50",
+              padding: "8px 10px",
+              borderRadius: 6,
+              color: "#fff",
+              width: "100%",
+            }}
           >
             🖨️ Thermal Print
           </button>
         </div>
       </div>
 
-      {/* Thermal Print CSS */}
+      {/* Print CSS */}
       <style>
         {`
         @media print {
