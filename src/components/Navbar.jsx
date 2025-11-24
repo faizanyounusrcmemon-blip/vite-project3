@@ -5,15 +5,17 @@ export default function Navbar({ onNavigate }) {
   const [openMenu, setOpenMenu] = useState(null);
   const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 
+  // Permission checker
   const can = (perm) => user?.role === "admin" || user?.[perm] === true;
 
   return (
     <div className="topbar">
       <div className="nav-left">
 
+        {/* Brand */}
         <div className="brand">💎 KHADIJA JEWELLERY</div>
 
-        {/* SALES MENU */}
+        {/* =============== SALES MENU =============== */}
         <div
           className="menu"
           onMouseEnter={() => setOpenMenu("sales")}
@@ -33,7 +35,7 @@ export default function Navbar({ onNavigate }) {
           )}
         </div>
 
-        {/* PURCHASE MENU */}
+        {/* =============== PURCHASE MENU =============== */}
         <div
           className="menu"
           onMouseEnter={() => setOpenMenu("purchase")}
@@ -53,7 +55,7 @@ export default function Navbar({ onNavigate }) {
           )}
         </div>
 
-        {/* MASTER MENU */}
+        {/* =============== MASTER MENU =============== */}
         <div
           className="menu"
           onMouseEnter={() => setOpenMenu("master")}
@@ -63,14 +65,31 @@ export default function Navbar({ onNavigate }) {
 
           {openMenu === "master" && (
             <div className="menu-list">
-              {can("item_profile") && <button onClick={() => onNavigate("item-profile")}>Item Profile</button>}
-              {can("customer_profile") && <button onClick={() => onNavigate("customer-profile")}>Customer Profile</button>}
-              {can("manage_users") && <button onClick={() => onNavigate("manage-users")}>Manage Users</button>}
+
+              {can("item_profile") && (
+                <button onClick={() => onNavigate("item-profile")}>Item Profile</button>
+              )}
+
+              {can("customer_profile") && (
+                <button onClick={() => onNavigate("customer-profile")}>Customer Profile</button>
+              )}
+
+              {can("manage_users") && (
+                <button onClick={() => onNavigate("manage-users")}>Manage Users</button>
+              )}
+
+              {/* ⭐ NEW — Create User Page */}
+              {can("create_user") && (
+                <button onClick={() => onNavigate("create-user")}>
+                  ➕ Create User
+                </button>
+              )}
+
             </div>
           )}
         </div>
 
-        {/* REPORT MENU */}
+        {/* =============== REPORTS MENU =============== */}
         <div
           className="menu"
           onMouseEnter={() => setOpenMenu("reports")}
@@ -80,22 +99,29 @@ export default function Navbar({ onNavigate }) {
 
           {openMenu === "reports" && (
             <div className="menu-list">
-              {can("stock_report") && <button onClick={() => onNavigate("stock-report")}>Stock Report</button>}
 
-              {can("sale_report") && <button onClick={() => onNavigate("sale-report")}>Sales Profit Report</button>}
-
-              {can("monthly_report") && (
-                <button onClick={() => onNavigate("monthly-report")}>Monthly Graph Report</button>
+              {can("stock_report") && (
+                <button onClick={() => onNavigate("stock-report")}>Stock Report</button>
               )}
 
-              {/* ⭐ NEW MONTHWISE SUMMARY */}
+              {can("sale_report") && (
+                <button onClick={() => onNavigate("sale-report")}>Sales Profit Report</button>
+              )}
+
+              {can("monthly_report") && (
+                <button onClick={() => onNavigate("monthly-report")}>
+                  Monthly Graph Report
+                </button>
+              )}
+
+              {/* Month Wise Summary */}
               {can("month_wise_summary") && (
                 <button onClick={() => onNavigate("month-wise-summary")}>
                   📦 Month Wise Summary
                 </button>
               )}
 
-              {/* ⭐ NEW DAYWISE SALE REPORT */}
+              {/* Day Wise Sale Report */}
               {can("day_wise_sale_report") && (
                 <button onClick={() => onNavigate("day-wise-sale-report")}>
                   📅 Day Wise Sale Report
@@ -115,14 +141,16 @@ export default function Navbar({ onNavigate }) {
                   🗑 Deleted Purchase Report
                 </button>
               )}
+
             </div>
           )}
         </div>
       </div>
 
-      {/* RIGHT SIDE BUTTONS */}
+      {/* =============== RIGHT SIDE BUTTONS =============== */}
       <div className="right-actions">
 
+        {/* Restore */}
         <button
           className="logout-btn"
           style={{ marginRight: "10px", background: "#6f42c1" }}
@@ -131,10 +159,12 @@ export default function Navbar({ onNavigate }) {
           🔄 Restore
         </button>
 
+        {/* Username */}
         <div className="status">
           🟢 {user?.username} ({user?.role})
         </div>
 
+        {/* Logout */}
         <button
           className="logout-btn"
           onClick={() => {
