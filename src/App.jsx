@@ -8,6 +8,7 @@ import SaleReturn from "./pages/SaleReturn";
 import SaleReturnDetail from "./pages/SaleReturnDetail";
 import SaleDetail from "./pages/SaleDetail";
 import SaleItemDetail from "./pages/SaleItemDetail";
+import CreateUser from "./pages/CreateUser";
 
 import PurchaseEntry from "./pages/PurchaseEntry";
 import PurchaseReturn from "./pages/PurchaseReturn";
@@ -133,6 +134,7 @@ export default function App() {
       case "purchase-detail": return <PurchaseDetail onNavigate={setPage} />;
       case "purchase-item-detail": return <PurchaseItemDetail onNavigate={setPage} />;
       case "purchase-delete-report": return <PurchaseDeleteReport onNavigate={setPage} />;
+      case "create-user": return <CreateUser onNavigate={setPage} />;
 
       case "item-profile": return <ItemProfile onNavigate={setPage} />;
       case "customer-profile": return <CustomerProfile onNavigate={setPage} />;
