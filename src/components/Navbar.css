@@ -5,7 +5,7 @@
   align-items: center;
   background: #222;
   color: white;
-  padding: 14px 20px;   /* ✅ increased height */
+  padding: 14px 20px;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -48,7 +48,7 @@
 /* ✅ Dropdown List */
 .menu-list {
   position: absolute;
-  top: calc(100% + 10px);   /* ✅ Fixed gap so dropdown doesn't close */
+  top: calc(100% + 10px);
   left: 0;
   background: white;
   color: #333;
@@ -72,8 +72,10 @@
   transition: background 0.2s;
 }
 
+/* ⭐ UPDATED: Light Blue Hover */
 .menu-list button:hover {
-  background: #f0f0f0;
+  background: #cce7ff !important;   /* Light Blue */
+  color: #000 !important;
 }
 
 /* ✅ Right Actions */
