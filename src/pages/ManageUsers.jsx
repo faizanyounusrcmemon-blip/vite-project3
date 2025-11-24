@@ -5,12 +5,31 @@ export default function ManageUsers({ onNavigate }) {
   const [users, setUsers] = useState([]);
   const [saving, setSaving] = useState(false);
 
-  // ⭐ Added: deleted_invoice_report
+  // ⭐ UPDATED PERMISSIONS LIST (NEW 2 ADDED)
   const perms = [
-    "sale_entry", "sale_return", "sale_detail", "sale_item_detail",
-    "purchase_entry", "purchase_return", "purchase_detail", "purchase_item_detail",
-    "item_profile", "customer_profile", "manage_users", "stock_report",
-    "sale_report", "monthly_report", "deleted_invoice_report"
+    "sale_entry",
+    "sale_return",
+    "sale_detail",
+    "sale_item_detail",
+
+    "purchase_entry",
+    "purchase_return",
+    "purchase_detail",
+    "purchase_item_detail",
+
+    "item_profile",
+    "customer_profile",
+    "manage_users",
+
+    "stock_report",
+    "sale_report",
+    "monthly_report",
+
+    "month_wise_summary",       // ⭐ NEW
+    "day_wise_sale_report",     // ⭐ NEW
+
+    "deleted_invoice_report",
+    "purchase_delete_report"
   ];
 
   async function loadUsers() {
