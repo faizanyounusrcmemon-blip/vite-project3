@@ -15,22 +15,25 @@ import PurchaseDetail from "./pages/PurchaseDetail";
 import PurchaseItemDetail from "./pages/PurchaseItemDetail";
 import PurchaseDeleteReport from "./pages/PurchaseDeleteReport";
 
-
 import ItemProfile from "./pages/ItemProfile";
 import CustomerProfile from "./pages/CustomerProfile";
 import ManageUsers from "./pages/ManageUsers";
+
 import StockReport from "./pages/StockReport";
+import SaleReport from "./pages/SaleReport";
+import MonthlyReport from "./pages/MonthlyReport";
 import BarcodePrint from "./pages/BarcodePrint";
+
 import Login from "./pages/login";
 import InvoiceEdit from "./pages/InvoiceEdit";
 import PurchaseEdit from "./pages/PurchaseEdit";
 
-
-import SaleReport from "./pages/SaleReport";
-import MonthlyReport from "./pages/MonthlyReport";
-
-// ⭐ NEW REPORT ADDED HERE
 import DeletedInvoiceReport from "./pages/DeletedInvoiceReport";
+
+// ⭐ NEW REPORTS
+import MonthWiseSummary from "./pages/MonthWiseSummary";
+import DayWiseSaleReport from "./pages/DayWiseSaleReport";
+
 
 // =====================================================================
 // SMALL BACKUP BUTTON
@@ -76,8 +79,9 @@ function BackupButton() {
   );
 }
 
+
 // =====================================================================
-// MAIN APP COMPONENT
+// MAIN APP
 // =====================================================================
 export default function App() {
   const [page, setPage] = useState("login");
@@ -98,13 +102,15 @@ export default function App() {
     }
   }, [user]);
 
-  // PAGE SWITCHING
+
+  // PAGE ROUTING
   function renderPage() {
     if (!user) return <Login onLogin={(u) => setUser(u)} />;
 
     switch (page) {
       case "dashboard": return <Dashboard onNavigate={setPage} />;
       case "restore": return <Restore onNavigate={setPage} />;
+
       case "sale-entry": return <SaleEntry onNavigate={setPage} />;
       case "sale-return": return <SaleReturn onNavigate={setPage} />;
       case "sale-return-detail": return <SaleReturnDetail onNavigate={setPage} />;
@@ -128,8 +134,6 @@ export default function App() {
       case "purchase-item-detail": return <PurchaseItemDetail onNavigate={setPage} />;
       case "purchase-delete-report": return <PurchaseDeleteReport onNavigate={setPage} />;
 
-
-      case "barcode-print": return <BarcodePrint onNavigate={setPage} />;
       case "item-profile": return <ItemProfile onNavigate={setPage} />;
       case "customer-profile": return <CustomerProfile onNavigate={setPage} />;
       case "manage-users": return <ManageUsers onNavigate={setPage} />;
@@ -137,8 +141,15 @@ export default function App() {
       case "stock-report": return <StockReport onNavigate={setPage} />;
       case "sale-report": return <SaleReport onNavigate={setPage} />;
       case "monthly-report": return <MonthlyReport onNavigate={setPage} />;
+      case "barcode-print": return <BarcodePrint onNavigate={setPage} />;
 
-      // ⭐ NEW PAGE
+      // ⭐ NEW REPORTS
+      case "month-wise-summary":
+        return <MonthWiseSummary onNavigate={setPage} />;
+
+      case "day-wise-sale-report":
+        return <DayWiseSaleReport onNavigate={setPage} />;
+
       case "deleted-invoice-report":
         return <DeletedInvoiceReport onNavigate={setPage} />;
 
@@ -154,7 +165,6 @@ export default function App() {
     <div className="app-root">
       {user && <Navbar onNavigate={setPage} />}
 
-      {/* ⭐ BACKUP BUTTON */}
       {user && (
         <div style={{ display: "flex", paddingLeft: "10px" }}>
           <BackupButton />
