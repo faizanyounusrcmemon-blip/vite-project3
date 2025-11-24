@@ -20,6 +20,7 @@ export default function ManageUsers({ onNavigate }) {
     "item_profile",
     "customer_profile",
     "manage_users",
+    "create_user",
 
     "stock_report",
     "sale_report",
