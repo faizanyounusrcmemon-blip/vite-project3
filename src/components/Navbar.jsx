@@ -5,17 +5,15 @@ export default function Navbar({ onNavigate }) {
   const [openMenu, setOpenMenu] = useState(null);
   const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 
-  // Permission checker
   const can = (perm) => user?.role === "admin" || user?.[perm] === true;
 
   return (
     <div className="topbar">
       <div className="nav-left">
 
-        {/* Brand */}
         <div className="brand">💎 KHADIJA JEWELLERY</div>
 
-        {/* ---------------- SALES MENU ---------------- */}
+        {/* SALES MENU */}
         <div
           className="menu"
           onMouseEnter={() => setOpenMenu("sales")}
@@ -29,15 +27,13 @@ export default function Navbar({ onNavigate }) {
               {can("sale_return") && <button onClick={() => onNavigate("sale-return")}>Sale Return</button>}
               {can("sale_detail") && <button onClick={() => onNavigate("sale-detail")}>Sale Detail</button>}
               {can("sale_item_detail") && (
-                <button onClick={() => onNavigate("sale-item-detail")}>
-                  Sale Item Detail
-                </button>
+                <button onClick={() => onNavigate("sale-item-detail")}>Sale Item Detail</button>
               )}
             </div>
           )}
         </div>
 
-        {/* ---------------- PURCHASE MENU ---------------- */}
+        {/* PURCHASE MENU */}
         <div
           className="menu"
           onMouseEnter={() => setOpenMenu("purchase")}
@@ -51,15 +47,13 @@ export default function Navbar({ onNavigate }) {
               {can("purchase_return") && <button onClick={() => onNavigate("purchase-return")}>Purchase Return</button>}
               {can("purchase_detail") && <button onClick={() => onNavigate("purchase-detail")}>Purchase Detail</button>}
               {can("purchase_item_detail") && (
-                <button onClick={() => onNavigate("purchase-item-detail")}>
-                  Purchase Item Detail
-                </button>
+                <button onClick={() => onNavigate("purchase-item-detail")}>Purchase Item Detail</button>
               )}
             </div>
           )}
         </div>
 
-        {/* ---------------- MASTER MENU ---------------- */}
+        {/* MASTER MENU */}
         <div
           className="menu"
           onMouseEnter={() => setOpenMenu("master")}
@@ -76,7 +70,7 @@ export default function Navbar({ onNavigate }) {
           )}
         </div>
 
-        {/* ---------------- REPORTS MENU ---------------- */}
+        {/* REPORT MENU */}
         <div
           className="menu"
           onMouseEnter={() => setOpenMenu("reports")}
@@ -86,28 +80,36 @@ export default function Navbar({ onNavigate }) {
 
           {openMenu === "reports" && (
             <div className="menu-list">
-              {can("stock_report") && (
-                <button onClick={() => onNavigate("stock-report")}>Stock Report</button>
-              )}
+              {can("stock_report") && <button onClick={() => onNavigate("stock-report")}>Stock Report</button>}
 
-              {can("sale_report") && (
-                <button onClick={() => onNavigate("sale-report")}>Sales Profit Report</button>
-              )}
+              {can("sale_report") && <button onClick={() => onNavigate("sale-report")}>Sales Profit Report</button>}
 
               {can("monthly_report") && (
-                <button onClick={() => onNavigate("monthly-report")}>
-                  Monthly Graph Report
+                <button onClick={() => onNavigate("monthly-report")}>Monthly Graph Report</button>
+              )}
+
+              {/* ⭐ NEW MONTHWISE SUMMARY */}
+              {can("month_wise_summary") && (
+                <button onClick={() => onNavigate("month-wise-summary")}>
+                  📦 Month Wise Summary
                 </button>
               )}
 
-              {/* ⭐ DELETED INVOICE REPORT */}
+              {/* ⭐ NEW DAYWISE SALE REPORT */}
+              {can("day_wise_sale_report") && (
+                <button onClick={() => onNavigate("day-wise-sale-report")}>
+                  📅 Day Wise Sale Report
+                </button>
+              )}
+
+              {/* Deleted Invoice */}
               {can("deleted_invoice_report") && (
                 <button onClick={() => onNavigate("deleted-invoice-report")}>
                   🗑 Deleted Invoice Report
                 </button>
               )}
 
-              {/* ⭐ PURCHASE DELETE REPORT */}
+              {/* Deleted Purchase */}
               {can("purchase_delete_report") && (
                 <button onClick={() => onNavigate("purchase-delete-report")}>
                   🗑 Deleted Purchase Report
@@ -118,10 +120,9 @@ export default function Navbar({ onNavigate }) {
         </div>
       </div>
 
-      {/* ---------------- RIGHT SIDE BUTTONS ---------------- */}
+      {/* RIGHT SIDE BUTTONS */}
       <div className="right-actions">
 
-        {/* Restore */}
         <button
           className="logout-btn"
           style={{ marginRight: "10px", background: "#6f42c1" }}
@@ -130,12 +131,10 @@ export default function Navbar({ onNavigate }) {
           🔄 Restore
         </button>
 
-        {/* Username */}
         <div className="status">
           🟢 {user?.username} ({user?.role})
         </div>
 
-        {/* Logout */}
         <button
           className="logout-btn"
           onClick={() => {
