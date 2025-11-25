@@ -27,6 +27,7 @@ export default function Navbar({ onNavigate }) {
             <div className="menu-list">
               {can("sale_entry") && <button onClick={() => onNavigate("sale-entry")}>Sale Entry</button>}
               {can("sale_return") && <button onClick={() => onNavigate("sale-return")}>Sale Return</button>}
+              {can("sale_return_detail") && <button onClick={() => onNavigate("sale-return-detail")}>Sale Return detail</button>}
               {can("sale_detail") && <button onClick={() => onNavigate("sale-detail")}>Sale Detail</button>}
               {can("sale_item_detail") && (
                 <button onClick={() => onNavigate("sale-item-detail")}>Sale Item Detail</button>
