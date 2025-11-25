@@ -1,83 +1,104 @@
+// --- FINAL DayWiseSaleReport.jsx (SALE - RETURN = NET SALE) ---
+
 import React, { useEffect, useState } from "react";
 import supabase from "../utils/supabaseClient";
 
 export default function DayWiseSaleReport({ onNavigate }) {
   const [allSales, setAllSales] = useState([]);
-  const [months, setMonths] = useState([]);     // list for dropdown
-  const [selectedMonth, setSelectedMonth] = useState(""); // "YYYY-MM"
-  const [days, setDays] = useState([]);         // date wise totals
+  const [allReturns, setAllReturns] = useState([]);
+  const [months, setMonths] = useState([]);
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [days, setDays] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    loadSales();
+    loadSalesAndReturns();
   }, []);
 
-  // ✅ load all non-deleted sales once
-  async function loadSales() {
+  // 🔥 LOAD SALES + RETURNS BOTH
+  async function loadSalesAndReturns() {
     setLoading(true);
 
-    const { data, error } = await supabase
+    // SALES
+    const { data: sales } = await supabase
       .from("sales")
       .select("sale_date, amount, is_deleted")
-      .eq("is_deleted", false); // <--- sirf not deleted
+      .eq("is_deleted", false);
 
-    if (error) {
-      console.error(error);
-      setAllSales([]);
-      setMonths([]);
-      setLoading(false);
-      return;
-    }
+    // RETURNS
+    const { data: returns } = await supabase
+      .from("sale_returns")
+      .select("invoice_no, amount, created_at");
 
-    const list = data || [];
-    setAllSales(list);
+    const saleList = sales || [];
+    const returnList = returns || [];
 
-    // build unique month list
+    setAllSales(saleList);
+    setAllReturns(returnList);
+
+    // month dropdown build
     const mMap = {};
-    list.forEach((r) => {
-      if (!r.sale_date) return;
-      const monthKey = r.sale_date.slice(0, 7); // YYYY-MM
+    saleList.forEach((s) => {
+      if (!s.sale_date) return;
+      const monthKey = s.sale_date.slice(0, 7);
       if (!mMap[monthKey]) {
         const [year, month] = monthKey.split("-");
-        mMap[monthKey] = {
-          key: monthKey,
-          year,
-          month,
-        };
+        mMap[monthKey] = { key: monthKey, year, month };
       }
     });
 
     const monthArr = Object.values(mMap).sort((a, b) =>
       a.key.localeCompare(b.key)
     );
-
     setMonths(monthArr);
 
-    // default: first month selected
     if (monthArr.length > 0) {
       setSelectedMonth(monthArr[0].key);
-      buildDayWise(list, monthArr[0].key);
+      buildDayWise(saleList, returnList, monthArr[0].key);
     }
 
     setLoading(false);
   }
 
-  // build date wise totals for selected month
-  function buildDayWise(sourceSales, monthKey) {
+  // 🔥 Build Day-wise (SALE, RETURN, NET)
+  function buildDayWise(sales, returns, monthKey) {
     const map = {};
 
-    sourceSales.forEach((r) => {
-      if (!r.sale_date) return;
-      if (!r.sale_date.startsWith(monthKey)) return; // only that month
+    // Collect Sales
+    sales.forEach((s) => {
+      if (!s.sale_date) return;
+      if (!s.sale_date.startsWith(monthKey)) return;
 
-      const day = r.sale_date; // full date
+      const day = s.sale_date;
+
       if (!map[day]) {
         map[day] = {
           sale_date: day,
-          totalAmount: 0,
+          totalSale: 0,
+          totalReturn: 0,
         };
       }
-      map[day].totalAmount += Number(r.amount || 0);
+
+      map[day].totalSale += Number(s.amount || 0);
+    });
+
+    // Collect Returns
+    returns.forEach((r) => {
+      if (!r.created_at) return;
+
+      const day = r.created_at.slice(0, 10); // YYYY-MM-DD
+
+      if (!day.startsWith(monthKey)) return;
+
+      if (!map[day]) {
+        map[day] = {
+          sale_date: day,
+          totalSale: 0,
+          totalReturn: 0,
+        };
+      }
+
+      map[day].totalReturn += Number(r.amount || 0);
     });
 
     const arr = Object.values(map).sort((a, b) =>
@@ -90,27 +111,27 @@ export default function DayWiseSaleReport({ onNavigate }) {
   function handleMonthChange(e) {
     const m = e.target.value;
     setSelectedMonth(m);
-    buildDayWise(allSales, m);
+    buildDayWise(allSales, allReturns, m);
   }
 
   const monthName = (m) => {
     const n = Number(m);
     const names = [
       "",
-      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+      "Jan","Feb","Mar","Apr","May","Jun",
+      "Jul","Aug","Sep","Oct","Nov","Dec",
     ];
     return names[n] || m;
   };
 
-  const totalMonthSale = days.reduce(
-    (s, r) => s + (Number(r.totalAmount) || 0),
-    0
-  );
+  const monthTotalSale = days.reduce((s, d) => s + d.totalSale, 0);
+  const monthTotalReturn = days.reduce((s, d) => s + d.totalReturn, 0);
+  const monthNet = monthTotalSale - monthTotalReturn;
 
   return (
     <div style={{ padding: 16, color: "#fff", fontFamily: "Inter" }}>
-      {/* Exit Button */}
+      
+      {/* Exit */}
       <button
         onClick={() => onNavigate("dashboard")}
         style={{
@@ -118,8 +139,6 @@ export default function DayWiseSaleReport({ onNavigate }) {
           color: "#fff",
           padding: "6px 12px",
           borderRadius: 5,
-          border: "none",
-          cursor: "pointer",
           marginBottom: 12,
         }}
       >
@@ -128,7 +147,7 @@ export default function DayWiseSaleReport({ onNavigate }) {
 
       <h2 style={{ color: "#f3c46b" }}>📅 Day Wise Sale Report</h2>
 
-      {/* Month selector */}
+      {/* Month dropdown */}
       <div style={{ marginTop: 10, marginBottom: 16 }}>
         <label style={{ marginRight: 8 }}>Select Month:</label>
         <select
@@ -136,7 +155,6 @@ export default function DayWiseSaleReport({ onNavigate }) {
           onChange={handleMonthChange}
           style={{ padding: 6, minWidth: 160 }}
         >
-          {months.length === 0 && <option value="">No data</option>}
           {months.map((m) => (
             <option key={m.key} value={m.key}>
               {monthName(m.month)} {m.year}
@@ -147,8 +165,6 @@ export default function DayWiseSaleReport({ onNavigate }) {
 
       {loading ? (
         <p>Loading...</p>
-      ) : days.length === 0 ? (
-        <p>No sale data for this month.</p>
       ) : (
         <div style={{ background: "#111", padding: 10, borderRadius: 6 }}>
           <table
@@ -157,7 +173,9 @@ export default function DayWiseSaleReport({ onNavigate }) {
             <thead>
               <tr style={{ background: "#333", color: "#f3c46b" }}>
                 <th style={{ padding: 6 }}>Date</th>
-                <th style={{ padding: 6, textAlign: "right" }}>Total Sale</th>
+                <th style={{ padding: 6, textAlign: "right" }}>Sale Amount</th>
+                <th style={{ padding: 6, textAlign: "right" }}>Return Amount</th>
+                <th style={{ padding: 6, textAlign: "right" }}>Net Amount</th>
               </tr>
             </thead>
             <tbody>
@@ -165,17 +183,24 @@ export default function DayWiseSaleReport({ onNavigate }) {
                 <tr key={d.sale_date} style={{ borderBottom: "1px solid #222" }}>
                   <td style={{ padding: 6 }}>{d.sale_date}</td>
                   <td style={{ padding: 6, textAlign: "right" }}>
-                    Rs {Number(d.totalAmount).toFixed(2)}
+                    Rs {d.totalSale.toFixed(2)}
+                  </td>
+                  <td style={{ padding: 6, textAlign: "right", color: "red" }}>
+                    Rs {d.totalReturn.toFixed(2)}
+                  </td>
+                  <td style={{ padding: 6, textAlign: "right", color: "green" }}>
+                    Rs {(d.totalSale - d.totalReturn).toFixed(2)}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
 
+          {/* Footer totals */}
           <div style={{ marginTop: 10, textAlign: "right" }}>
-            <b>
-              Month Total: Rs {totalMonthSale.toFixed(2)}
-            </b>
+            <b>Total Sale: Rs {monthTotalSale.toFixed(2)}</b><br />
+            <b style={{ color: "red" }}>Total Return: Rs {monthTotalReturn.toFixed(2)}</b><br />
+            <b style={{ color: "lightgreen" }}>Net Sale: Rs {monthNet.toFixed(2)}</b>
           </div>
         </div>
       )}
