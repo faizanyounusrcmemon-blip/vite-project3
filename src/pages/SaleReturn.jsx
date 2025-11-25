@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import supabase from "../utils/supabaseClient";
 
-export default function SaleReturn() {
+export default function SaleReturn({ onNavigate }) {
   const [invoiceNo, setInvoiceNo] = useState("");
   const [saleData, setSaleData] = useState(null);
   const [returnItems, setReturnItems] = useState([]);
@@ -24,7 +24,6 @@ export default function SaleReturn() {
 
     setSaleData(data);
 
-    // create return rows
     const prepared = data.map((d) => ({
       itemName: d.item_name,
       barcode: d.barcode,
@@ -37,7 +36,7 @@ export default function SaleReturn() {
     setReturnItems(prepared);
   };
 
-  // 🔘 Full Return handler
+  // 🔘 Full Return
   const applyFullReturn = (checked) => {
     setFullReturn(checked);
 
@@ -50,7 +49,7 @@ export default function SaleReturn() {
     setReturnItems(updated);
   };
 
-  // ✏ Return Qty change
+  // ✏ Change Return Qty
   const updateQty = (index, value) => {
     const updated = [...returnItems];
     const qty = Number(value);
@@ -71,10 +70,8 @@ export default function SaleReturn() {
     const filtered = returnItems.filter((i) => i.returnQty > 0);
     if (!filtered.length) return alert("No return qty entered!");
 
-    // total
     const total = filtered.reduce((s, i) => s + i.amount, 0);
 
-    // Insert into sale_returns table
     const rows = filtered.map((i) => ({
       invoice_no: invoiceNo,
       item_name: i.itemName,
@@ -87,10 +84,8 @@ export default function SaleReturn() {
     }));
 
     const { error } = await supabase.from("sale_returns").insert(rows);
-
     if (error) return alert("Error saving return: " + error.message);
 
-    // increase stock
     for (const r of filtered) {
       await supabase.rpc("increase_stock", {
         p_barcode: r.barcode,
@@ -102,9 +97,34 @@ export default function SaleReturn() {
     window.location.reload();
   };
 
+  // ❌ Cancel Return
+  const cancelReturn = () => {
+    if (window.confirm("Cancel Return?")) {
+      window.location.reload();
+    }
+  };
+
   return (
     <div style={{ padding: 20 }}>
       <h2 style={{ textAlign: "center" }}>Sale Return</h2>
+
+      {/* 🔙 Exit Button */}
+      {saleData && (
+        <button
+          onClick={() => onNavigate("dashboard")}
+          style={{
+            padding: "6px 10px",
+            marginBottom: "15px",
+            background: "#444",
+            color: "white",
+            borderRadius: "5px",
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          ⬅ Exit
+        </button>
+      )}
 
       {/* Invoice Search */}
       <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
@@ -168,10 +188,29 @@ export default function SaleReturn() {
             </tbody>
           </table>
 
-          {/* Save Button */}
+          {/* Save + Cancel Buttons */}
           <div style={{ textAlign: "right", marginTop: 12 }}>
-            <button onClick={saveReturn} style={{ padding: "6px 14px" }}>
+            <button
+              onClick={saveReturn}
+              style={{
+                padding: "6px 14px",
+                background: "green",
+                color: "white",
+                marginRight: "10px",
+              }}
+            >
               Save Return
+            </button>
+
+            <button
+              onClick={cancelReturn}
+              style={{
+                padding: "6px 14px",
+                background: "red",
+                color: "white",
+              }}
+            >
+              Cancel
             </button>
           </div>
         </>
