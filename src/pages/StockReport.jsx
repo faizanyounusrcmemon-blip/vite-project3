@@ -1,4 +1,5 @@
-// src/pages/StockReport.jsx
+// --- FINAL StockReport.jsx (RETURN STOCK + EXIT + PRINT BUTTONS) ---
+
 import React, { useEffect, useState } from "react";
 import supabase from "../utils/supabaseClient";
 
@@ -17,7 +18,7 @@ export default function StockReport({ onNavigate }) {
     setError("");
 
     try {
-      // ⭐ PURCHASES → ignore soft-deleted rows
+      // ⭐ PURCHASE
       const { data: purchases } = await supabase
         .from("purchases")
         .select("item_code, item_name, barcode, purchase_rate, qty, is_deleted")
@@ -26,9 +27,9 @@ export default function StockReport({ onNavigate }) {
       const map = new Map();
 
       purchases?.forEach((r) => {
-        const code = String(r.item_code || "");
-        if (!code) return;
+        if (!r.item_code) return;
 
+        const code = String(r.item_code);
         const item = map.get(code) || {
           item_code: code,
           item_name: r.item_name,
@@ -42,28 +43,38 @@ export default function StockReport({ onNavigate }) {
         map.set(code, item);
       });
 
-      // ⭐ SALES → ignore soft-deleted sale rows
-      const { data: sales, error: salesErr } = await supabase
+      // ⭐ SALES
+      const { data: sales } = await supabase
         .from("sales")
         .select("item_code, qty, is_deleted")
         .eq("is_deleted", false);
 
-      if (salesErr) throw salesErr;
-
       sales?.forEach((r) => {
-        const code = String(r.item_code || "");
-        const qty = Number(r.qty || 0);
-        if (!code) return;
+        if (!r.item_code) return;
 
+        const code = String(r.item_code);
         const item = map.get(code);
         if (!item) return;
 
-        item.sold_qty += qty;
+        item.sold_qty += Number(r.qty || 0);
       });
 
-      // ⭐ Final Stock Calculation
-      const final = [];
+      // ⭐ SALE RETURNS (stock add back)
+      const { data: returns } = await supabase
+        .from("sale_returns")
+        .select("barcode, return_qty");
 
+      returns?.forEach((r) => {
+        const item = [...map.values()].find(
+          (x) => String(x.barcode) === String(r.barcode)
+        );
+        if (item) {
+          item.sold_qty -= Number(r.return_qty || 0); // return added back
+        }
+      });
+
+      // ⭐ FINAL STOCK
+      const final = [];
       for (const it of map.values()) {
         const remaining = it.purchase_qty - it.sold_qty;
         final.push({
@@ -73,8 +84,8 @@ export default function StockReport({ onNavigate }) {
         });
       }
 
-      // ⭐ Search filter
-      const f = q
+      // ⭐ Search
+      const res = q
         ? final.filter(
             (r) =>
               r.item_code.toLowerCase().includes(q.toLowerCase()) ||
@@ -83,7 +94,7 @@ export default function StockReport({ onNavigate }) {
           )
         : final;
 
-      setRows(f);
+      setRows(res);
     } catch (err) {
       setError(err.message);
     }
@@ -139,7 +150,6 @@ export default function StockReport({ onNavigate }) {
                     <td>{r.item_name}</td>
                     <td style={{ textAlign: "right" }}>{r.purchase_qty}</td>
                     <td style={{ textAlign: "right" }}>{r.sold_qty}</td>
-
                     <td
                       style={{
                         textAlign: "right",
@@ -148,7 +158,6 @@ export default function StockReport({ onNavigate }) {
                     >
                       {r.remaining_qty}
                     </td>
-
                     <td style={{ textAlign: "right", color: "#f3c46b" }}>
                       {r.remaining_amount.toFixed(2)}
                     </td>
@@ -164,7 +173,7 @@ export default function StockReport({ onNavigate }) {
           <b>Total Stock Value:</b> Rs {totalValue.toFixed(2)}
         </div>
 
-        {/* Exit + Thermal Print */}
+        {/* Exit + Print Buttons */}
         <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
           <button
             onClick={handleExit}
@@ -189,7 +198,7 @@ export default function StockReport({ onNavigate }) {
               width: "100%",
             }}
           >
-            🖨️ Thermal Print
+            🖨️ Print
           </button>
         </div>
       </div>
@@ -198,16 +207,9 @@ export default function StockReport({ onNavigate }) {
       <style>
         {`
         @media print {
-          body {
-            width: 80mm;
-            font-size: 11px;
-          }
-          table {
-            width: 100%;
-          }
-          button, input, h2 {
-            display: none !important;
-          }
+          body { width: 80mm; font-size: 11px; }
+          table { width: 100%; }
+          button, input, h2 { display: none !important; }
         }
         `}
       </style>
