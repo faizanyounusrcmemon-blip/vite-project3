@@ -1,5 +1,3 @@
-// src/pages/SaleReturn.jsx
-
 import React, { useState } from "react";
 import supabase from "../utils/supabaseClient";
 
@@ -9,7 +7,6 @@ export default function SaleReturn({ onNavigate }) {
   const [returnItems, setReturnItems] = useState([]);
   const [fullReturn, setFullReturn] = useState(false);
 
-  // 🔍 Load Invoice
   const loadInvoice = async () => {
     if (!invoiceNo) return alert("Invoice No required!");
 
@@ -36,7 +33,6 @@ export default function SaleReturn({ onNavigate }) {
     setReturnItems(prepared);
   };
 
-  // 🔘 Full Return
   const applyFullReturn = (checked) => {
     setFullReturn(checked);
 
@@ -49,7 +45,6 @@ export default function SaleReturn({ onNavigate }) {
     setReturnItems(updated);
   };
 
-  // ✏ Change Return Qty
   const updateQty = (index, value) => {
     const updated = [...returnItems];
     const qty = Number(value);
@@ -65,7 +60,6 @@ export default function SaleReturn({ onNavigate }) {
     setReturnItems(updated);
   };
 
-  // 💾 SAVE RETURN
   const saveReturn = async () => {
     const filtered = returnItems.filter((i) => i.returnQty > 0);
     if (!filtered.length) return alert("No return qty entered!");
@@ -97,7 +91,6 @@ export default function SaleReturn({ onNavigate }) {
     window.location.reload();
   };
 
-  // ❌ Cancel Return
   const cancelReturn = () => {
     if (window.confirm("Cancel Return?")) {
       window.location.reload();
@@ -106,25 +99,23 @@ export default function SaleReturn({ onNavigate }) {
 
   return (
     <div style={{ padding: 20 }}>
-      <h2 style={{ textAlign: "center" }}>Sale Return</h2>
+      {/* 🔙 EXIT ALWAYS VISIBLE */}
+      <button
+        onClick={() => onNavigate("dashboard")}
+        style={{
+          padding: "6px 10px",
+          marginBottom: "15px",
+          background: "#444",
+          color: "white",
+          borderRadius: "5px",
+          border: "none",
+          cursor: "pointer",
+        }}
+      >
+        ⬅ Exit
+      </button>
 
-      {/* 🔙 Exit Button */}
-      {saleData && (
-        <button
-          onClick={() => onNavigate("dashboard")}
-          style={{
-            padding: "6px 10px",
-            marginBottom: "15px",
-            background: "#444",
-            color: "white",
-            borderRadius: "5px",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          ⬅ Exit
-        </button>
-      )}
+      <h2 style={{ textAlign: "center" }}>Sale Return</h2>
 
       {/* Invoice Search */}
       <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
@@ -141,7 +132,7 @@ export default function SaleReturn({ onNavigate }) {
 
       {saleData && (
         <>
-          {/* Full Return Check */}
+          {/* Full Return */}
           <div style={{ marginBottom: 10 }}>
             <input
               type="checkbox"
@@ -151,7 +142,6 @@ export default function SaleReturn({ onNavigate }) {
             <label style={{ marginLeft: 6 }}>Full Bill Return</label>
           </div>
 
-          {/* Table */}
           <table border="1" width="100%" style={{ borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "#eee" }}>
@@ -188,7 +178,7 @@ export default function SaleReturn({ onNavigate }) {
             </tbody>
           </table>
 
-          {/* Save + Cancel Buttons */}
+          {/* Save + Cancel */}
           <div style={{ textAlign: "right", marginTop: 12 }}>
             <button
               onClick={saveReturn}
