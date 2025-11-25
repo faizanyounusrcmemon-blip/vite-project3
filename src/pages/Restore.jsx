@@ -5,7 +5,7 @@ export default function Restore() {
   const [loading, setLoading] = useState(false);
   const [selectedTable, setSelectedTable] = useState("");
 
-  const TABLES = ["sales", "purchases", "items", "customers", "app_users"];
+  const TABLES = ["sales", "purchases", "items", "customers", "app_users", "sale_returns"];
 
   useEffect(() => {
     loadBackups();
