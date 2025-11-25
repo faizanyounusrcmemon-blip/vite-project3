@@ -9,6 +9,7 @@ export default function ManageUsers({ onNavigate }) {
   const perms = [
     "sale_entry",
     "sale_return",
+    "sale_return_detail",
     "sale_detail",
     "sale_item_detail",
 
