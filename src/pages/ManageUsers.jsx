@@ -24,6 +24,7 @@ export default function ManageUsers({ onNavigate }) {
     "create_user",
 
     "stock_report",
+    "stock-ledger",
     "sale_report",
     "monthly_report",
 
