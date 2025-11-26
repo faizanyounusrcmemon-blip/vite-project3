@@ -9,6 +9,8 @@ import SaleReturnDetail from "./pages/SaleReturnDetail";
 import SaleDetail from "./pages/SaleDetail";
 import SaleItemDetail from "./pages/SaleItemDetail";
 import CreateUser from "./pages/CreateUser";
+import StockLedger from "./pages/StockLedger";
+
 
 import PurchaseEntry from "./pages/PurchaseEntry";
 import PurchaseReturn from "./pages/PurchaseReturn";
@@ -116,6 +118,8 @@ export default function App() {
       case "sale-entry": return <SaleEntry onNavigate={setPage} />;
       case "sale-return": return <SaleReturn onNavigate={setPage} />;
       case "sale-return-detail": return <SaleReturnDetail onNavigate={setPage} />;
+      case "stock-ledger": return <StockLedger onNavigate={setPage} />;
+
 
       case "sale-detail":
         return (
