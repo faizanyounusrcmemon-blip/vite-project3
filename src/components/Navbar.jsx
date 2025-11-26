@@ -105,6 +105,10 @@ export default function Navbar({ onNavigate }) {
                 <button onClick={() => onNavigate("stock-report")}>Stock Report</button>
               )}
 
+              {can("stock_ledger") && (
+                <button onClick={() => onNavigate("stock-ledger")}>Stock Ledger</button>
+              )}
+
               {can("sale_report") && (
                 <button onClick={() => onNavigate("sale-report")}>Sales Profit Report</button>
               )}
