@@ -127,9 +127,13 @@ export default function Navbar({ onNavigate }) {
                 </button>
               )}
 
+              {/* Rate Difference report */}
+              {can("Rate_Difference_report") && (
                 <button onClick={() => onNavigate("rate-difference-report")}>
                    Rate Difference report
                 </button>
+              )}
+
 
               {/* Deleted Invoice */}
               {can("deleted_invoice_report") && (
