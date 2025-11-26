@@ -23,6 +23,7 @@ import ManageUsers from "./pages/ManageUsers";
 import StockReport from "./pages/StockReport";
 import SaleReport from "./pages/SaleReport";
 import MonthlyReport from "./pages/MonthlyReport";
+import RateDifferenceReport from "./pages/RateDifferenceReport";
 import BarcodePrint from "./pages/BarcodePrint";
 
 import Login from "./pages/login";
@@ -154,6 +155,9 @@ export default function App() {
 
       case "deleted-invoice-report":
         return <DeletedInvoiceReport onNavigate={setPage} />;
+      case "rate-difference-report":
+        return <RateDifferenceReport onNavigate={setPage} />;
+
 
       case "invoice-edit": return <InvoiceEdit onNavigate={setPage} />;
       case "purchase-edit": return <PurchaseEdit onNavigate={setPage} />;
