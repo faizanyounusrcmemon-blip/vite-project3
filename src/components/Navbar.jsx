@@ -110,9 +110,7 @@ export default function Navbar({ onNavigate }) {
               )}
 
               {can("monthly_report") && (
-                <button onClick={() => onNavigate("monthly-report")}>
-                  Monthly Graph Report
-                </button>
+                <button onClick={() => onNavigate("monthly-report")}>Monthly Graph Report</button>
               )}
 
               {/* Month Wise Summary */}
@@ -129,12 +127,18 @@ export default function Navbar({ onNavigate }) {
                 </button>
               )}
 
+                <button onClick={() => onNavigate("rate-difference-report")}>
+                   Rate Difference report
+                </button>
+
               {/* Deleted Invoice */}
               {can("deleted_invoice_report") && (
                 <button onClick={() => onNavigate("deleted-invoice-report")}>
                   🗑 Deleted Invoice Report
                 </button>
               )}
+
+
 
               {/* Deleted Purchase */}
               {can("purchase_delete_report") && (
