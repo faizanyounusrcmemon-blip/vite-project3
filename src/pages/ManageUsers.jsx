@@ -29,6 +29,7 @@ export default function ManageUsers({ onNavigate }) {
 
     "month_wise_summary",       // ⭐ NEW
     "day_wise_sale_report",     // ⭐ NEW
+    "rate_difference_report",
 
     "deleted_invoice_report",
     "purchase_delete_report"
