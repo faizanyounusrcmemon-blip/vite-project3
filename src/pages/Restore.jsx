@@ -47,9 +47,9 @@ export default function Restore() {
     setLoading(false);
 
     if (data.success) {
-      alert("Restore successful");
+      alert("✅ Restore Successful");
     } else {
-      alert("Restore failed: " + data.error);
+      alert("❌ Restore Failed: " + data.error);
     }
   }
 
@@ -128,3 +128,4 @@ export default function Restore() {
     </div>
   );
 }
+
