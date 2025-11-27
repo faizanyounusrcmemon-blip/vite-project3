@@ -160,7 +160,7 @@ export default function Dashboard() {
             background: "rgba(0,0,0,0.3)",
           }}
         >
-          ✅ Supabase Connected
+          ✅ Software Created By FaizanYounus
         </div>
       </div>
 
