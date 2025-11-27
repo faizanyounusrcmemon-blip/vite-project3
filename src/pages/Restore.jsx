@@ -1,5 +1,5 @@
 // =====================================================
-//   FINAL Restore.jsx (Backup Size + Delete + Download Password)
+//   FINAL Restore.jsx (Download Password + All Fixes)
 // =====================================================
 
 import React, { useEffect, useState } from "react";
@@ -52,6 +52,7 @@ export default function Restore({ onNavigate }) {
 
     clearInterval(int);
     setProgress(100);
+
     setTimeout(() => {
       setRestoring(false);
       setProgress(0);
@@ -83,10 +84,16 @@ export default function Restore({ onNavigate }) {
     }
   }
 
-  // ⭐ FIXED + PASSWORD ADDED
+  // ⭐ FIXED DOWNLOAD WITH PASSWORD PROTECTION
   async function downloadBackup(fileName) {
     const password = prompt("Enter Password to Download:");
     if (!password) return;
+
+    // 🔐 Download password check
+    if (password !== "faizanyounus") {
+      alert("❌ Incorrect Password!");
+      return;
+    }
 
     const ok = confirm(`Download:\n${fileName}?`);
     if (!ok) return;
@@ -103,7 +110,7 @@ export default function Restore({ onNavigate }) {
 
   return (
     <div style={{ padding: 20, color: "white" }}>
-
+      
       <button
         onClick={() => onNavigate("dashboard")}
         style={{
@@ -150,7 +157,7 @@ export default function Restore({ onNavigate }) {
                 background: "#ff9800",
                 transition: "0.2s",
               }}
-            ></div>
+            />
           </div>
           <p>{progress}% Restoring...</p>
         </div>
@@ -196,20 +203,14 @@ export default function Restore({ onNavigate }) {
                 defaultValue=""
                 style={{ padding: "6px", borderRadius: "6px", marginRight: 10 }}
               >
-                <option value="" disabled>
-                  Table
-                </option>
+                <option value="" disabled>Table</option>
                 {TABLES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
+                  <option key={t} value={t}>{t}</option>
                 ))}
               </select>
 
               <button
-                onClick={() =>
-                  restoreFile(file.name, "table", selectedTable)
-                }
+                onClick={() => restoreFile(file.name, "table", selectedTable)}
                 style={{
                   background: "#2979ff",
                   padding: "6px 10px",
@@ -246,6 +247,7 @@ export default function Restore({ onNavigate }) {
                 🗑 Delete
               </button>
             </div>
+
           </div>
         ))}
       </div>
