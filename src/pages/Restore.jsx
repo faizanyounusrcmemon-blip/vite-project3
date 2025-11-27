@@ -1,5 +1,5 @@
 // =====================================================
-//   FINAL Restore.jsx (Backup Size + Delete Fix)
+//   FINAL Restore.jsx (Backup Size + Delete + Download Password)
 // =====================================================
 
 import React, { useEffect, useState } from "react";
@@ -82,17 +82,18 @@ export default function Restore({ onNavigate }) {
       alert("❌ " + data.error);
     }
   }
+
+  // ⭐ FIXED + PASSWORD ADDED
   async function downloadBackup(fileName) {
-    const password = prompt("Enter Password to Download Backup");
+    const password = prompt("Enter Password to Download:");
     if (!password) return;
-    
+
     const ok = confirm(`Download:\n${fileName}?`);
     if (!ok) return;
 
-  function downloadBackup(name) {
     const link = document.createElement("a");
-    link.href = `${import.meta.env.VITE_BACKEND_URL}/api/download-backup/${name}`;
-    link.download = name;
+    link.href = `${import.meta.env.VITE_BACKEND_URL}/api/download-backup/${fileName}`;
+    link.download = fileName;
     link.click();
   }
 
@@ -251,6 +252,3 @@ export default function Restore({ onNavigate }) {
     </div>
   );
 }
-
-
-
