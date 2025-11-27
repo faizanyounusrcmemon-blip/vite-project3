@@ -1,3 +1,7 @@
+// ===============================
+//   FINAL App.jsx (WITH BACKUP PROGRESS)
+// ===============================
+
 import React, { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 
@@ -10,7 +14,6 @@ import SaleDetail from "./pages/SaleDetail";
 import SaleItemDetail from "./pages/SaleItemDetail";
 import CreateUser from "./pages/CreateUser";
 import StockLedger from "./pages/StockLedger";
-
 
 import PurchaseEntry from "./pages/PurchaseEntry";
 import PurchaseReturn from "./pages/PurchaseReturn";
@@ -33,16 +36,17 @@ import InvoiceEdit from "./pages/InvoiceEdit";
 import PurchaseEdit from "./pages/PurchaseEdit";
 
 import DeletedInvoiceReport from "./pages/DeletedInvoiceReport";
-
-// ⭐ NEW REPORTS
 import MonthWiseSummary from "./pages/MonthWiseSummary";
 import DayWiseSaleReport from "./pages/DayWiseSaleReport";
 
 
-// =====================================================================
-// SMALL BACKUP BUTTON
-// =====================================================================
+// =================================================
+//   BACKUP BUTTON (WITH PROGRESS BAR)
+// =================================================
 function BackupButton() {
+  const [progress, setProgress] = useState(0);
+  const [isBackingUp, setIsBackingUp] = useState(false);
+
   async function takeBackup() {
     const pwd = prompt("Enter backup password:");
     if (!pwd) return;
@@ -52,41 +56,82 @@ function BackupButton() {
       return;
     }
 
-    try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/backup`, {
-        method: "POST",
-      });
+    setProgress(0);
+    setIsBackingUp(true);
 
-      const data = await res.json();
-      alert(data.success ? "✅ Backup Completed!" : "❌ " + data.error);
-    } catch (err) {
-      alert("❌ Error: " + err.message);
-    }
+    // Smooth UI progress (fake)
+    const int = setInterval(() => {
+      setProgress((p) => {
+        if (p >= 90) return 90;
+        return p + 5;
+      });
+    }, 150);
+
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/backup`, {
+      method: "POST",
+    });
+
+    const data = await res.json();
+
+    clearInterval(int);
+    setProgress(100);
+
+    setTimeout(() => {
+      setIsBackingUp(false);
+      setProgress(0);
+    }, 700);
+
+    alert(data.success ? "✅ Backup Completed!" : "❌ " + data.error);
   }
 
   return (
-    <button
-      onClick={takeBackup}
-      style={{
-        background: "#0d6efd",
-        color: "white",
-        padding: "4px 10px",
-        fontSize: "13px",
-        borderRadius: "5px",
-        cursor: "pointer",
-        border: "none",
-        margin: "8px 5px",
-      }}
-    >
-      ☁ Backup
-    </button>
+    <div style={{ marginTop: "8px" }}>
+      <button
+        onClick={takeBackup}
+        disabled={isBackingUp}
+        style={{
+          background: isBackingUp ? "#6c757d" : "#0d6efd",
+          color: "white",
+          padding: "4px 10px",
+          fontSize: "13px",
+          borderRadius: "5px",
+          cursor: "pointer",
+          border: "none",
+          marginRight: "5px",
+        }}
+      >
+        ☁ {isBackingUp ? "Backing Up..." : "Backup"}
+      </button>
+
+      {isBackingUp && (
+        <div
+          style={{
+            width: "150px",
+            height: "6px",
+            background: "#ccc",
+            marginTop: "5px",
+            borderRadius: "4px",
+          }}
+        >
+          <div
+            style={{
+              width: `${progress}%`,
+              height: "100%",
+              background: "#28a745",
+              borderRadius: "4px",
+              transition: "0.2s",
+            }}
+          />
+        </div>
+      )}
+    </div>
   );
 }
 
 
-// =====================================================================
-// MAIN APP
-// =====================================================================
+// =================================================
+//   MAIN APP
+// =================================================
 export default function App() {
   const [page, setPage] = useState("login");
   const [user, setUser] = useState(null);
@@ -106,8 +151,6 @@ export default function App() {
     }
   }, [user]);
 
-
-  // PAGE ROUTING
   function renderPage() {
     if (!user) return <Login onLogin={(u) => setUser(u)} />;
 
@@ -118,8 +161,8 @@ export default function App() {
       case "sale-entry": return <SaleEntry onNavigate={setPage} />;
       case "sale-return": return <SaleReturn onNavigate={setPage} />;
       case "sale-return-detail": return <SaleReturnDetail onNavigate={setPage} />;
-      case "stock-ledger": return <StockLedger onNavigate={setPage} />;
 
+      case "stock-ledger": return <StockLedger onNavigate={setPage} />;
 
       case "sale-detail":
         return (
@@ -138,9 +181,10 @@ export default function App() {
       case "purchase-return": return <PurchaseReturn onNavigate={setPage} />;
       case "purchase-detail": return <PurchaseDetail onNavigate={setPage} />;
       case "purchase-item-detail": return <PurchaseItemDetail onNavigate={setPage} />;
-      case "purchase-delete-report": return <PurchaseDeleteReport onNavigate={setPage} />;
-      case "create-user": return <CreateUser onNavigate={setPage} />;
 
+      case "purchase-delete-report": return <PurchaseDeleteReport onNavigate={setPage} />;
+
+      case "create-user": return <CreateUser onNavigate={setPage} />;
       case "item-profile": return <ItemProfile onNavigate={setPage} />;
       case "customer-profile": return <CustomerProfile onNavigate={setPage} />;
       case "manage-users": return <ManageUsers onNavigate={setPage} />;
@@ -150,18 +194,11 @@ export default function App() {
       case "monthly-report": return <MonthlyReport onNavigate={setPage} />;
       case "barcode-print": return <BarcodePrint onNavigate={setPage} />;
 
-      // ⭐ NEW REPORTS
-      case "month-wise-summary":
-        return <MonthWiseSummary onNavigate={setPage} />;
+      case "month-wise-summary": return <MonthWiseSummary onNavigate={setPage} />;
+      case "day-wise-sale-report": return <DayWiseSaleReport onNavigate={setPage} />;
+      case "deleted-invoice-report": return <DeletedInvoiceReport onNavigate={setPage} />;
 
-      case "day-wise-sale-report":
-        return <DayWiseSaleReport onNavigate={setPage} />;
-
-      case "deleted-invoice-report":
-        return <DeletedInvoiceReport onNavigate={setPage} />;
-      case "rate-difference-report":
-        return <RateDifferenceReport onNavigate={setPage} />;
-
+      case "rate-difference-report": return <RateDifferenceReport onNavigate={setPage} />;
 
       case "invoice-edit": return <InvoiceEdit onNavigate={setPage} />;
       case "purchase-edit": return <PurchaseEdit onNavigate={setPage} />;
@@ -175,8 +212,9 @@ export default function App() {
     <div className="app-root">
       {user && <Navbar onNavigate={setPage} />}
 
+      {/* Backup Button */}
       {user && (
-        <div style={{ display: "flex", paddingLeft: "10px" }}>
+        <div style={{ paddingLeft: "10px" }}>
           <BackupButton />
         </div>
       )}
