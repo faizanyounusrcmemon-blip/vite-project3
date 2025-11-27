@@ -14,7 +14,7 @@ export default function PurchaseItemDetail({ onNavigate }) {
   useEffect(() => {
     const t = new Date();
     const f = new Date();
-    f.setDate(t.getDate() - 30);
+    f.setDate(t.getDate() - 365);
     setFrom(f.toISOString().slice(0, 10));
     setTo(t.toISOString().slice(0, 10));
   }, []);
