@@ -85,6 +85,9 @@ export default function Restore({ onNavigate }) {
   async function downloadBackup(fileName) {
     const password = prompt("Enter Password to Download Backup");
     if (!password) return;
+    
+    const ok = confirm(`Download:\n${fileName}?`);
+    if (!ok) return;
 
   function downloadBackup(name) {
     const link = document.createElement("a");
@@ -248,5 +251,6 @@ export default function Restore({ onNavigate }) {
     </div>
   );
 }
+
 
 
