@@ -1,33 +1,41 @@
+// =====================================================
+//   FINAL Restore.jsx (Backup Size + Delete Fix)
+// =====================================================
+
 import React, { useEffect, useState } from "react";
 
-export default function Restore() {
+export default function Restore({ onNavigate }) {
   const [backups, setBackups] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [restoring, setRestoring] = useState(false);
   const [selectedTable, setSelectedTable] = useState("");
+  const [search, setSearch] = useState("");
 
-  const TABLES = ["sales", "purchases", "items", "customers", "app_users", "sale_returns"];
+  const TABLES = ["sales","purchases","items","customers","app_users","sale_returns"];
 
   useEffect(() => {
     loadBackups();
   }, []);
 
   async function loadBackups() {
-    const res = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/list-backups`
-    );
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/list-backups`);
     const data = await res.json();
-    if (data.success) setBackups(data.files);
+    if (data.success) {
+      const sorted = data.files.sort((a, b) => (a.date < b.date ? 1 : -1));
+      setBackups(sorted);
+    }
   }
 
   async function restoreFile(fileName, mode, table = null) {
     const password = prompt("Enter Restore Password:");
+    if (!password) return;
 
-    if (!password) {
-      alert("Restore cancelled (no password entered)");
-      return;
-    }
+    setRestoring(true);
+    setProgress(0);
 
-    setLoading(true);
+    const int = setInterval(() => {
+      setProgress((p) => (p >= 90 ? 90 : p + 4));
+    }, 150);
 
     const form = new FormData();
     form.append("password", password);
@@ -37,95 +45,203 @@ export default function Restore() {
 
     const res = await fetch(
       `${import.meta.env.VITE_BACKEND_URL}/api/restore-from-bucket`,
-      {
-        method: "POST",
-        body: form,
-      }
+      { method: "POST", body: form }
     );
 
     const data = await res.json();
-    setLoading(false);
+
+    clearInterval(int);
+    setProgress(100);
+    setTimeout(() => {
+      setRestoring(false);
+      setProgress(0);
+    }, 700);
+
+    alert(data.success ? "✔ Restore Successful!" : "❌ " + data.error);
+  }
+
+  async function deleteBackup(fileName) {
+    const password = prompt("Enter Restore Password to Delete:");
+    if (!password) return;
+
+    const ok = confirm(`Delete:\n${fileName}?`);
+    if (!ok) return;
+
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/delete-backup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fileName, password }),
+    });
+
+    const data = await res.json();
 
     if (data.success) {
-      alert("✅ Restore Successful");
+      alert("🗑 Backup Deleted");
+      loadBackups();
     } else {
-      alert("❌ Restore Failed: " + data.error);
+      alert("❌ " + data.error);
     }
   }
 
-  return (
-    <div style={{ padding: 20 }}>
+  function downloadBackup(name) {
+    const link = document.createElement("a");
+    link.href = `${import.meta.env.VITE_BACKEND_URL}/api/download-backup/${name}`;
+    link.download = name;
+    link.click();
+  }
 
-      {/* ⭐ EXIT BUTTON — no navigate, safe */}
+  const filtered = backups.filter((b) =>
+    b.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div style={{ padding: 20, color: "white" }}>
+
       <button
-        onClick={() => (window.location.href = "/")}
+        onClick={() => onNavigate("dashboard")}
         style={{
-          marginBottom: 20,
-          backgroundColor: "red",
-          color: "white",
-          padding: "6px 12px",
+          background: "#ff3333",
+          padding: "8px 16px",
           borderRadius: "6px",
-          cursor: "pointer",
           border: "none",
+          color: "white",
         }}
       >
-        EXIT
+        ⬅ Back
       </button>
 
-      <h2>Restore Backup</h2>
+      <h1 style={{ marginTop: 20 }}>📦 Backup History</h1>
 
-      {loading && <p>Restoring, please wait...</p>}
+      <input
+        type="text"
+        placeholder="Search Backup..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={{
+          width: "300px",
+          padding: "8px",
+          borderRadius: "6px",
+          marginTop: "15px",
+        }}
+      />
 
-      {backups.length === 0 ? (
-        <p>No backups found.</p>
-      ) : (
-        <table border="1" cellPadding="8" style={{ marginTop: 20 }}>
-          <thead>
-            <tr>
-              <th>File Name</th>
-              <th>Date</th>
-              <th>Full Restore</th>
-              <th>Table Restore</th>
-            </tr>
-          </thead>
-          <tbody>
-            {backups.map((file, index) => (
-              <tr key={index}>
-                <td>{file.name}</td>
-                <td>{file.date}</td>
-                <td>
-                  <button onClick={() => restoreFile(file.name, "full")}>
-                    Restore Full
-                  </button>
-                </td>
-                <td>
-                  <select
-                    onChange={(e) => setSelectedTable(e.target.value)}
-                    defaultValue=""
-                  >
-                    <option value="" disabled>
-                      Select Table
-                    </option>
-                    {TABLES.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={() =>
-                      restoreFile(file.name, "table", selectedTable)
-                    }
-                  >
-                    Restore Table
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {restoring && (
+        <div style={{ marginTop: 15 }}>
+          <div
+            style={{
+              width: "350px",
+              height: "12px",
+              background: "#333",
+              borderRadius: "6px",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                width: `${progress}%`,
+                height: "100%",
+                background: "#ff9800",
+                transition: "0.2s",
+              }}
+            ></div>
+          </div>
+          <p>{progress}% Restoring...</p>
+        </div>
       )}
+
+      <div
+        style={{
+          marginTop: 25,
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+          gap: "15px",
+        }}
+      >
+        {filtered.map((file, i) => (
+          <div
+            key={i}
+            style={{
+              background: "#1c1c1c",
+              padding: "18px",
+              borderRadius: "10px",
+            }}
+          >
+            <h3>📁 {file.name}</h3>
+            <p>📅 {file.date}</p>
+            <p>📦 Size: {file.size}</p>
+
+            <div style={{ marginTop: 10 }}>
+              <button
+                onClick={() => restoreFile(file.name, "full")}
+                style={{
+                  background: "#00c853",
+                  padding: "6px 10px",
+                  borderRadius: "6px",
+                  color: "white",
+                  marginRight: "10px",
+                }}
+              >
+                🔄 Full
+              </button>
+
+              <select
+                onChange={(e) => setSelectedTable(e.target.value)}
+                defaultValue=""
+                style={{ padding: "6px", borderRadius: "6px", marginRight: 10 }}
+              >
+                <option value="" disabled>
+                  Table
+                </option>
+                {TABLES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                onClick={() =>
+                  restoreFile(file.name, "table", selectedTable)
+                }
+                style={{
+                  background: "#2979ff",
+                  padding: "6px 10px",
+                  borderRadius: "6px",
+                  color: "white",
+                }}
+              >
+                🧩 Restore
+              </button>
+            </div>
+
+            <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
+              <button
+                onClick={() => downloadBackup(file.name)}
+                style={{
+                  background: "#8e24aa",
+                  padding: "6px 10px",
+                  color: "white",
+                  borderRadius: "6px",
+                }}
+              >
+                ⬇ Download
+              </button>
+
+              <button
+                onClick={() => deleteBackup(file.name)}
+                style={{
+                  background: "#d50000",
+                  padding: "6px 10px",
+                  color: "white",
+                  borderRadius: "6px",
+                }}
+              >
+                🗑 Delete
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
-
