@@ -61,7 +61,7 @@ export default function Restore({ onNavigate }) {
   }
 
   async function deleteBackup(fileName) {
-    const password = prompt("Enter Restore Password to Delete:");
+    const password = prompt("Enter Password to Delete:");
     if (!password) return;
 
     const ok = confirm(`Delete:\n${fileName}?`);
@@ -245,3 +245,4 @@ export default function Restore({ onNavigate }) {
     </div>
   );
 }
+
