@@ -27,7 +27,7 @@ export default function PurchaseDetail({ onNavigate }) {
       const { data, error } = await supabase
         .from("purchases")
         .select("id, invoice_no, company_name, purchase_date, amount")
-        .eq("is_deleted", false);           // ⭐ Only non-deleted entries
+        .eq("is_deleted", false)           // ⭐ Only non-deleted entries
         .gte("purchase_date", from)
         .lte("purchase_date", to)
         .order("purchase_date", { ascending: false });
