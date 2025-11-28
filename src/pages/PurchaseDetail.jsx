@@ -9,7 +9,6 @@ export default function PurchaseDetail({ onNavigate }) {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
 
-  // Set default 30 days back
   useEffect(() => {
     const t = new Date();
     const f = new Date();
@@ -18,26 +17,23 @@ export default function PurchaseDetail({ onNavigate }) {
     setTo(t.toISOString().slice(0, 10));
   }, []);
 
-  // Auto load when filters change
   useEffect(() => {
     if (from && to) load();
   }, [from, to, search]);
 
-  // Load purchases
   async function load() {
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from("purchases")
         .select("id, invoice_no, company_name, purchase_date, amount")
-        .filter("is_deleted", "in", "(false,FALSE)")   // ⭐ FIXED LINE (100% WORKING)
+        .eq("is_deleted", false)           // ⭐ Only non-deleted entries
         .gte("purchase_date", from)
         .lte("purchase_date", to)
         .order("purchase_date", { ascending: false });
 
       if (error) throw error;
 
-      // Group rows by invoice_no
       const grouped = Object.values(
         data.reduce((acc, row) => {
           if (!acc[row.invoice_no]) {
@@ -54,7 +50,6 @@ export default function PurchaseDetail({ onNavigate }) {
         }, {})
       );
 
-      // Search filter (same as your original)
       const q = search.toLowerCase();
       const filtered = grouped.filter(
         r =>
@@ -75,13 +70,13 @@ export default function PurchaseDetail({ onNavigate }) {
 
   const handleExit = () => onNavigate("dashboard");
 
-  // Edit invoice (same as your code)
+  // ⭐ EDIT FUNCTION
   const editInvoice = (invoice) => {
     sessionStorage.setItem("purchaseEditInvoice", invoice);
     onNavigate("purchase-edit");
   };
 
-  // Soft delete
+  // ⭐ SOFT DELETE FUNCTION (with password)
   const softDelete = async (invoiceNo) => {
     const p = prompt("Enter delete password:");
     if (!p) return;
@@ -101,7 +96,6 @@ export default function PurchaseDetail({ onNavigate }) {
 
   return (
     <div style={{ padding: 16, fontFamily: "Inter, system-ui, sans-serif", color: "#fff" }}>
-      
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h2 style={{ margin: 0, marginBottom: 12, color: "#f3c46b" }}>Purchase Detail</h2>
@@ -139,7 +133,6 @@ export default function PurchaseDetail({ onNavigate }) {
             placeholder="Search invoice or company..."
           />
         </div>
-
         <button
           onClick={load}
           style={{ background: "#f3c46b", padding: "8px 12px", borderRadius: 8 }}
@@ -192,7 +185,7 @@ export default function PurchaseDetail({ onNavigate }) {
                       </button>
                     </td>
 
-                    {/* Edit */}
+                    {/* ⭐ EDIT BUTTON */}
                     <td>
                       <button
                         onClick={() => editInvoice(r.invoice_no)}
@@ -209,7 +202,7 @@ export default function PurchaseDetail({ onNavigate }) {
                       </button>
                     </td>
 
-                    {/* Delete */}
+                    {/* ⭐ SOFT DELETE BUTTON */}
                     <td>
                       <button
                         onClick={() => softDelete(r.invoice_no)}
